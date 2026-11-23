@@ -1,0 +1,40 @@
+# Gradle & Kotlin caches
+*.iml
+.gradle
+.kotlin/
+/build
+
+# Local configuration
+/local.properties
+local.properties
+
+# Android Studio / IntelliJ IDEA
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+/.idea/deploymentTargetSelector.xml
+/.idea/deviceManager.xml
+/.idea/other.xml
+
+# Built application files
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Keystore & signing files (never commit secrets)
+*.jks
+*.keystore
+keystore.properties
+
+# Native build & profiling
+/captures
+.externalNativeBuild
+.cxx
+*.hprof
+
+# macOS
+.DS_Store

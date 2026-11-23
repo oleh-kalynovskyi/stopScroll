@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">FocusGuard</string>
+    <string name="accessibility_service_label">FocusGuard Blocker</string>
+    <string name="accessibility_service_description">FocusGuard uses this service only to detect when Instagram comes to the foreground, so it can show the lock screen or the gray unlock overlay according to your rules. No screen content is read or collected.</string>
+</resources>
