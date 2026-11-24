@@ -156,23 +156,23 @@ data class AppStrings(
 
 val EnglishStrings = AppStrings(
     isUkrainian = false,
-    appSubtitle = "Instagram & TikTok blocker",
+    appSubtitle = "Instagram, TikTok & X blocker",
     languageMenuTitle = "App language",
     languageSystem = "System language",
     languageEnglish = "English",
     languageUkrainian = "Українська",
     permissionsTitle = "Permissions Dashboard",
     permissionsAllActive = "All required system permissions are active.",
-    permissionsGrantBoth = "Grant both permissions so FocusGuard can detect and dim Instagram and TikTok.",
+    permissionsGrantBoth = "Grant both permissions so FocusGuard can detect and dim Instagram, TikTok, and X.",
     permOverlayTitle = "Display Over Other Apps",
     permOverlaySubtitle = "Renders the pass-through gray tint during temporary unlocks",
     permAccessibilityTitle = "Accessibility Service",
-    permAccessibilitySubtitle = "Detects when Instagram or TikTok comes to the foreground",
+    permAccessibilitySubtitle = "Detects when Instagram, TikTok, or X comes to the foreground",
     actionSettings = "Settings",
     actionGrant = "Grant",
     masterBlockerTitle = "Master Blocker",
     blockedAppsTitle = "Guarded apps",
-    blockedAppsHint = "Select one or both apps to block",
+    blockedAppsHint = "Select which apps to block (at least one)",
     minOneAppRequiredHint = "At least one app must remain selected.",
     appsConjunction = " & ",
     statusPaused = "Blocker is paused",
@@ -190,9 +190,9 @@ val EnglishStrings = AppStrings(
     modeAllDay = "All Day (24/7)",
     modeCustomPeriods = "Custom Periods",
     ruleHardBlockOn = "Hard Block is ON: no temporary unlocks are offered in any mode. " +
-        "Instagram and TikTok stay locked until you turn the blocker off here.",
+        "Selected apps stay locked until you turn the blocker off here.",
     ruleAllDay = { quotaMin, frictionSec ->
-        "All Day is > 2 hours, so you can unlock Instagram and TikTok for up to $quotaMin minutes in total per clock hour " +
+        "All Day is > 2 hours, so you can unlock selected apps for up to $quotaMin minutes in total per clock hour " +
             "(after a ${frictionSec}s pause, with a gray screen)."
     },
     ruleCustomEmpty = { quotaMin ->
@@ -209,7 +209,7 @@ val EnglishStrings = AppStrings(
     overnightSupportedSubtitle = "Overnight ranges (e.g. 22:00 – 02:00) are supported",
     addPeriodChip = "Add period",
     noPeriodsTitle = "No time periods yet",
-    noPeriodsSubtitle = "Instagram and TikTok won't be blocked in Custom mode until you add at least one interval.",
+    noPeriodsSubtitle = "Selected apps won't be blocked in Custom mode until you add at least one interval.",
     addTimePeriodButton = "Add Time Period",
     activeBadge = "Active",
     intervalHardBlockTag = "Hard Block enabled",
@@ -262,23 +262,23 @@ val EnglishStrings = AppStrings(
 
 val UkrainianStrings = AppStrings(
     isUkrainian = true,
-    appSubtitle = "Блокувальник Instagram та TikTok",
+    appSubtitle = "Блокувальник Instagram, TikTok та X",
     languageMenuTitle = "Мова застосунку",
     languageSystem = "Системна мова",
     languageEnglish = "English",
     languageUkrainian = "Українська",
     permissionsTitle = "Панель дозволів",
     permissionsAllActive = "Усі необхідні системні дозволи надано.",
-    permissionsGrantBoth = "Надайте обидва дозволи, щоб FocusGuard міг виявляти та затемнювати Instagram і TikTok.",
+    permissionsGrantBoth = "Надайте обидва дозволи, щоб FocusGuard міг виявляти та затемнювати Instagram, TikTok та X.",
     permOverlayTitle = "Відображення поверх інших вікон",
     permOverlaySubtitle = "Накладає прозорий сірий фільтр під час тимчасового розблокування",
     permAccessibilityTitle = "Служба спеціальних можливостей",
-    permAccessibilitySubtitle = "Виявляє, коли Instagram або TikTok відкривається на екрані",
+    permAccessibilitySubtitle = "Виявляє, коли Instagram, TikTok або X відкривається на екрані",
     actionSettings = "Налаштування",
     actionGrant = "Надати",
     masterBlockerTitle = "Головний перемикач",
     blockedAppsTitle = "Застосунки для блокування",
-    blockedAppsHint = "Оберіть один або обидва застосунки",
+    blockedAppsHint = "Оберіть застосунки для блокування (хоча б один)",
     minOneAppRequiredHint = "Має бути обраний хоча б один застосунок.",
     appsConjunction = " і ",
     statusPaused = "Блокувальник призупинено",
@@ -298,9 +298,9 @@ val UkrainianStrings = AppStrings(
     modeAllDay = "Весь день (24/7)",
     modeCustomPeriods = "Власні періоди",
     ruleHardBlockOn = "Жорстке блокування УВІМКНЕНО: тимчасові розблокування недоступні в жодному режимі. " +
-        "Instagram і TikTok заблоковано, доки ви не вимкнете блокувальник тут.",
+        "Обрані застосунки заблоковано, доки ви не вимкнете блокувальник тут.",
     ruleAllDay = { quotaMin, frictionSec ->
-        "Режим «Весь день» триває > 2 годин, тому Instagram і TikTok можна розблокувати загалом до $quotaMin хв на годину " +
+        "Режим «Весь день» триває > 2 годин, тому обрані застосунки можна розблокувати загалом до $quotaMin хв на годину " +
             "(після ${frictionSec}-секундної паузи, із сірим екраном)."
     },
     ruleCustomEmpty = { quotaMin ->
@@ -317,7 +317,7 @@ val UkrainianStrings = AppStrings(
     overnightSupportedSubtitle = "Підтримуються нічні інтервали (напр. 22:00 – 02:00)",
     addPeriodChip = "Додати період",
     noPeriodsTitle = "Часових періодів ще немає",
-    noPeriodsSubtitle = "У режимі власних періодів Instagram і TikTok не блокуватимуться, доки ви не додасте хоча б один інтервал.",
+    noPeriodsSubtitle = "У режимі власних періодів обрані застосунки не блокуватимуться, доки ви не додасте хоча б один інтервал.",
     addTimePeriodButton = "Додати часовий період",
     activeBadge = "Активний",
     intervalHardBlockTag = "Жорстке блокування",

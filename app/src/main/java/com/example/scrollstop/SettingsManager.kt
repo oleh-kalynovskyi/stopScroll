@@ -66,6 +66,13 @@ enum class TargetApp(
             "com.ss.android.ugc.trill",
             "com.zhiliaoapp.musically.go",
         ),
+    ),
+    X_TWITTER(
+        displayName = "X (Twitter)",
+        packages = setOf(
+            "com.twitter.android",
+            "com.twitter.android.lite",
+        ),
     );
 
     companion object {

@@ -16,6 +16,8 @@ class ExampleUnitTest {
         assertEquals(TargetApp.TIKTOK, TargetApp.fromPackage("com.zhiliaoapp.musically"))
         assertEquals(TargetApp.TIKTOK, TargetApp.fromPackage("com.ss.android.ugc.trill"))
         assertEquals(TargetApp.TIKTOK, TargetApp.fromPackage("com.zhiliaoapp.musically.go"))
+        assertEquals(TargetApp.X_TWITTER, TargetApp.fromPackage("com.twitter.android"))
+        assertEquals(TargetApp.X_TWITTER, TargetApp.fromPackage("com.twitter.android.lite"))
         assertNull(TargetApp.fromPackage("com.android.settings"))
         assertNull(TargetApp.fromPackage(null))
     }
