@@ -30,11 +30,11 @@ internal fun LanguageSelector(
 ) {
     val s = currentStrings
     var expanded by remember { mutableStateOf(false) }
-    val activeShortCode = if (s.isUkrainian) "UA" else "EN"
-    val chipLabel = when (selectedLanguage) {
-        AppLanguage.SYSTEM -> "${selectedLanguage.shortLabel} ($activeShortCode)"
-        AppLanguage.EN -> AppLanguage.EN.shortLabel
-        AppLanguage.UK -> AppLanguage.UK.shortLabel
+    val activeShortCode = s.language.shortLabel
+    val chipLabel = if (selectedLanguage == AppLanguage.SYSTEM) {
+        "${selectedLanguage.shortLabel} ($activeShortCode)"
+    } else {
+        selectedLanguage.shortLabel
     }
 
     Box(modifier = Modifier.padding(end = 8.dp)) {
@@ -61,22 +61,18 @@ internal fun LanguageSelector(
                     onLanguageSelect(AppLanguage.SYSTEM)
                 },
             )
-            LanguageMenuItem(
-                label = "${s.languageEnglish} (EN)",
-                selected = selectedLanguage == AppLanguage.EN,
-                onClick = {
-                    expanded = false
-                    onLanguageSelect(AppLanguage.EN)
-                },
-            )
-            LanguageMenuItem(
-                label = "${s.languageUkrainian} (UA)",
-                selected = selectedLanguage == AppLanguage.UK,
-                onClick = {
-                    expanded = false
-                    onLanguageSelect(AppLanguage.UK)
-                },
-            )
+            AppLanguage.entries
+                .filter { it != AppLanguage.SYSTEM }
+                .forEach { lang ->
+                    LanguageMenuItem(
+                        label = "${lang.nativeName} (${lang.shortLabel})",
+                        selected = selectedLanguage == lang,
+                        onClick = {
+                            expanded = false
+                            onLanguageSelect(lang)
+                        },
+                    )
+                }
         }
     }
 }

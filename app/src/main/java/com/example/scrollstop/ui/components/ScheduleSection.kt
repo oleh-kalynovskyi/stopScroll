@@ -47,84 +47,89 @@ import com.example.scrollstop.formatMinuteOfDay
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ScheduleCard(
-    mode: ScheduleMode,
-    hardBlock: Boolean,
-    intervalsCount: Int,
-    onModeChange: (ScheduleMode) -> Unit,
-    onHardBlockChange: (Boolean) -> Unit,
+        mode: ScheduleMode,
+        hardBlock: Boolean,
+        intervalsCount: Int,
+        onModeChange: (ScheduleMode) -> Unit,
+        onHardBlockChange: (Boolean) -> Unit,
 ) {
     val s = currentStrings
     Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
+            colors =
+                    CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    ),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
-                text = s.scheduleTitle,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
+                    text = s.scheduleTitle,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
             )
 
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth(),
+            ) {
                 SegmentedButton(
-                    selected = mode == ScheduleMode.ALL_DAY,
-                    onClick = { onModeChange(ScheduleMode.ALL_DAY) },
-                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                    label = { Text(s.modeAllDay) },
+                        selected = mode == ScheduleMode.ALL_DAY,
+                        onClick = { onModeChange(ScheduleMode.ALL_DAY) },
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                        label = { Text(s.modeAllDay) },
                 )
                 SegmentedButton(
-                    selected = mode == ScheduleMode.CUSTOM,
-                    onClick = { onModeChange(ScheduleMode.CUSTOM) },
-                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                    label = { Text(s.modeCustomPeriods) },
+                        selected = mode == ScheduleMode.CUSTOM,
+                        onClick = { onModeChange(ScheduleMode.CUSTOM) },
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                        label = { Text(s.modeCustomPeriods) },
                 )
             }
 
-            val ruleExplanation = when {
-                hardBlock -> s.ruleHardBlockOn
-                mode == ScheduleMode.ALL_DAY -> s.ruleAllDay(
-                    SettingsManager.QUOTA_MINUTES_PER_HOUR,
-                    SettingsManager.FRICTION_SECONDS,
-                )
-
-                intervalsCount == 0 -> s.ruleCustomEmpty(SettingsManager.QUOTA_MINUTES_PER_HOUR)
-                else -> s.ruleCustomWithIntervals(SettingsManager.QUOTA_MINUTES_PER_HOUR)
-            }
+            val ruleExplanation =
+                    when {
+                        hardBlock -> s.ruleHardBlockOn
+                        mode == ScheduleMode.ALL_DAY ->
+                                s.ruleAllDay(
+                                        SettingsManager.QUOTA_MINUTES_PER_HOUR,
+                                        SettingsManager.FRICTION_SECONDS,
+                                )
+                        intervalsCount == 0 ->
+                                s.ruleCustomEmpty(SettingsManager.QUOTA_MINUTES_PER_HOUR)
+                        else -> s.ruleCustomWithIntervals(SettingsManager.QUOTA_MINUTES_PER_HOUR)
+                    }
             Text(
-                text = ruleExplanation,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = ruleExplanation,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .toggleable(
-                        value = hardBlock,
-                        role = Role.Checkbox,
-                        onValueChange = onHardBlockChange,
-                    )
-                    .padding(vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                    modifier =
+                            Modifier.fillMaxWidth()
+                                    .toggleable(
+                                            value = hardBlock,
+                                            role = Role.Checkbox,
+                                            onValueChange = onHardBlockChange,
+                                    )
+                                    .padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
             ) {
                 Checkbox(checked = hardBlock, onCheckedChange = null)
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = s.hardBlockCheckboxTitle,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
+                            text = s.hardBlockCheckboxTitle,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
                     )
                     Text(
-                        text = s.hardBlockCheckboxSubtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            text = s.hardBlockCheckboxSubtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -134,41 +139,41 @@ internal fun ScheduleCard(
 
 @Composable
 internal fun IntervalsHeader(
-    count: Int,
-    message: String?,
-    onAddClick: () -> Unit,
+        count: Int,
+        message: String?,
+        onAddClick: () -> Unit,
 ) {
     val s = currentStrings
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = s.customPeriodsHeader(count),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                        text = s.customPeriodsHeader(count),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = s.overnightSupportedSubtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = s.overnightSupportedSubtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Spacer(Modifier.width(8.dp))
             AssistChip(
-                onClick = onAddClick,
-                label = { Text(s.addPeriodChip) },
-                leadingIcon = { Icon(Icons.Rounded.Add, contentDescription = null) },
+                    onClick = onAddClick,
+                    label = { Text(s.addPeriodChip) },
+                    leadingIcon = { Icon(Icons.Rounded.Add, contentDescription = null) },
             )
         }
         if (message != null) {
             Text(
-                text = message,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.tertiary,
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.tertiary,
             )
         }
     }
@@ -178,31 +183,30 @@ internal fun IntervalsHeader(
 internal fun EmptyIntervalsCard(onAddClick: () -> Unit) {
     val s = currentStrings
     Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
+            colors =
+                    CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth().padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Icon(
-                imageVector = Icons.Rounded.Schedule,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(32.dp),
+                    imageVector = Icons.Rounded.Schedule,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(32.dp),
             )
             Text(
-                text = s.noPeriodsTitle,
-                style = MaterialTheme.typography.titleSmall,
+                    text = s.noPeriodsTitle,
+                    style = MaterialTheme.typography.titleSmall,
             )
             Text(
-                text = s.noPeriodsSubtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = s.noPeriodsSubtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Button(onClick = onAddClick) {
                 Icon(Icons.Rounded.Add, contentDescription = null)
@@ -215,81 +219,84 @@ internal fun EmptyIntervalsCard(onAddClick: () -> Unit) {
 
 @Composable
 internal fun IntervalRow(
-    interval: TimeInterval,
-    hardBlock: Boolean,
-    isActiveNow: Boolean,
-    is24Hour: Boolean,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit,
+        interval: TimeInterval,
+        hardBlock: Boolean,
+        isActiveNow: Boolean,
+        is24Hour: Boolean,
+        onEdit: () -> Unit,
+        onDelete: () -> Unit,
 ) {
     val s = currentStrings
     val duration = interval.durationMinutes
     val eligibleAlone = !hardBlock && duration > SettingsManager.MIN_PERIOD_FOR_UNLOCK_MINUTES
 
     Card(
-        onClick = onEdit,
-        colors = CardDefaults.cardColors(
-            containerColor = if (isActiveNow) {
-                MaterialTheme.colorScheme.surfaceContainerHigh
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerLow
-            },
-        ),
+            onClick = onEdit,
+            colors =
+                    CardDefaults.cardColors(
+                            containerColor =
+                                    if (isActiveNow) {
+                                        MaterialTheme.colorScheme.surfaceContainerHigh
+                                    } else {
+                                        MaterialTheme.colorScheme.surfaceContainerLow
+                                    },
+                    ),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = if (eligibleAlone) Icons.Rounded.LockOpen else Icons.Rounded.LockClock,
-                contentDescription = null,
-                tint = if (eligibleAlone) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.tertiary
-                },
+                    imageVector =
+                            if (eligibleAlone) Icons.Rounded.LockOpen else Icons.Rounded.LockClock,
+                    contentDescription = null,
+                    tint =
+                            if (eligibleAlone) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.tertiary
+                            },
             )
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     val rangeText =
-                        "${formatMinuteOfDay(interval.startMinute, is24Hour)} – " +
-                            formatMinuteOfDay(interval.endMinute, is24Hour)
+                            "${formatMinuteOfDay(interval.startMinute, is24Hour)} – " +
+                                    formatMinuteOfDay(interval.endMinute, is24Hour)
                     Text(
-                        text = rangeText,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                            text = rangeText,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
                     )
                     if (isActiveNow) {
                         StatusBadge(
-                            label = s.activeBadge,
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                label = s.activeBadge,
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
                     }
                 }
-                val ruleTag = when {
-                    hardBlock -> s.intervalHardBlockTag
-                    eligibleAlone -> s.intervalUnlockEligibleTag
-                    else -> s.intervalShortHardBlockTag
-                }
+                val ruleTag =
+                        when {
+                            hardBlock -> s.intervalHardBlockTag
+                            eligibleAlone -> s.intervalUnlockEligibleTag
+                            else -> s.intervalShortHardBlockTag
+                        }
                 val overnightTag = if (interval.crossesMidnight) s.overnightTag else ""
                 Text(
-                    text = "${s.formatDuration(duration)}$overnightTag · $ruleTag",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = "${s.formatDuration(duration)}$overnightTag · $ruleTag",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             IconButton(onClick = onDelete) {
                 Icon(
-                    imageVector = Icons.Rounded.DeleteOutline,
-                    contentDescription = s.deletePeriodContentDesc,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        imageVector = Icons.Rounded.DeleteOutline,
+                        contentDescription = s.deletePeriodContentDesc,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -298,19 +305,19 @@ internal fun IntervalRow(
 
 @Composable
 internal fun StatusBadge(
-    label: String,
-    containerColor: Color,
-    contentColor: Color,
+        label: String,
+        containerColor: Color,
+        contentColor: Color,
 ) {
     Surface(
-        color = containerColor,
-        contentColor = contentColor,
-        shape = RoundedCornerShape(6.dp),
+            color = containerColor,
+            contentColor = contentColor,
+            shape = RoundedCornerShape(6.dp),
     ) {
         Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
         )
     }
 }

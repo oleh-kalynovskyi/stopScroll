@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">FocusGuard</string>
+    <string name="accessibility_service_label">FocusGuard-Blocker</string>
+    <string name="accessibility_service_description">FocusGuard nutzt diesen Dienst ausschließlich, um zu erkennen, wann Instagram, TikTok oder X (Twitter) im Vordergrund geöffnet wird, damit der Sperrbildschirm oder der graue Filter gemäß deinen Regeln angezeigt werden kann. Es werden keine Bildschirminhalte gelesen oder gespeichert.</string>
+</resources>

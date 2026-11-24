@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">FocusGuard</string>
+    <string name="accessibility_service_label">Blocco FocusGuard</string>
+    <string name="accessibility_service_description">FocusGuard utilizza questo servizio solo per rilevare quando Instagram, TikTok o X (Twitter) viene aperto in primo piano, in modo da mostrare la schermata di blocco o il filtro grigio di sblocco in base alle tue regole. Nessun contenuto dello schermo viene letto o raccolto.</string>
+</resources>

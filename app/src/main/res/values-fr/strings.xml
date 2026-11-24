@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">FocusGuard</string>
+    <string name="accessibility_service_label">Bloqueur FocusGuard</string>
+    <string name="accessibility_service_description">FocusGuard utilise ce service uniquement pour détecter l\'ouverture d\'Instagram, TikTok ou X (Twitter) au premier plan, afin d\'afficher l\'écran de blocage ou le filtre gris de déverrouillage selon vos règles. Aucun contenu de l\'écran n\'est lu ni collecté.</string>
+</resources>
