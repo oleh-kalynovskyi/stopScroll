@@ -2,6 +2,8 @@ package com.example.scrollstop.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,6 +38,7 @@ import com.example.scrollstop.TargetApp
 import com.example.scrollstop.currentStrings
 import com.example.scrollstop.formatMinuteOfDay
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun MasterToggleCard(
     enabled: Boolean,
@@ -52,9 +55,15 @@ internal fun MasterToggleCard(
     onEndUnlock: () -> Unit,
 ) {
     val s = currentStrings
-    val appsLabel = TargetApp.entries
+    val selectedNames = TargetApp.entries
         .filter { it in selectedApps }
-        .joinToString(separator = s.appsConjunction) { it.displayName }
+        .map { it.displayName }
+    val appsLabel = when (selectedNames.size) {
+        0 -> ""
+        1 -> selectedNames[0]
+        2 -> "${selectedNames[0]}${s.appsConjunction}${selectedNames[1]}"
+        else -> selectedNames.dropLast(1).joinToString(", ") + s.appsConjunction + selectedNames.last()
+    }
 
     val statusText = when {
         !enabled -> s.statusPaused
@@ -132,9 +141,10 @@ internal fun MasterToggleCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Row(
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     TargetApp.entries.forEach { app ->
                         val isSelected = app in selectedApps
@@ -158,7 +168,6 @@ internal fun MasterToggleCard(
                             } else {
                                 null
                             },
-                            modifier = Modifier.weight(1f),
                         )
                     }
                 }
