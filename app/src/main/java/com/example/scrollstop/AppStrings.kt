@@ -129,6 +129,7 @@ data class AppStrings(
         val pickerEndTimeTitle: (startFormatted: String) -> String,
         val pickerNextButton: String,
         val pickerAddButton: String,
+        val pickerSaveButton: String,
         val pickerCancelButton: String,
         val pickerToggleInputDesc: String,
         val errSameStartEnd: String,
@@ -234,6 +235,7 @@ val EnglishStrings =
                 pickerEndTimeTitle = { start -> "End time (from $start)" },
                 pickerNextButton = "Next",
                 pickerAddButton = "Add period",
+                pickerSaveButton = "Save",
                 pickerCancelButton = "Cancel",
                 pickerToggleInputDesc = "Toggle time input mode",
                 errSameStartEnd =
@@ -358,6 +360,7 @@ val UkrainianStrings =
                 pickerEndTimeTitle = { start -> "Час закінчення (від $start)" },
                 pickerNextButton = "Далі",
                 pickerAddButton = "Додати період",
+                pickerSaveButton = "Зберегти",
                 pickerCancelButton = "Скасувати",
                 pickerToggleInputDesc = "Змінити спосіб введення часу",
                 errSameStartEnd =

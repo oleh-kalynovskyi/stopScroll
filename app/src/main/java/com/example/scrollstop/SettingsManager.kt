@@ -203,6 +203,19 @@ class SettingsManager private constructor(context: Context) {
         return AddIntervalResult.ADDED
     }
 
+    fun updateInterval(id: String, startMinute: Int, endMinute: Int): AddIntervalResult {
+        if (startMinute == endMinute) return AddIntervalResult.INVALID_SAME_TIME
+        val current = getIntervals()
+        if (current.any { it.id != id && it.startMinute == startMinute && it.endMinute == endMinute }) {
+            return AddIntervalResult.DUPLICATE
+        }
+        val updated = current.map {
+            if (it.id == id) it.copy(startMinute = startMinute, endMinute = endMinute) else it
+        }
+        saveIntervals(updated)
+        return AddIntervalResult.ADDED
+    }
+
     fun removeInterval(id: String) {
         saveIntervals(getIntervals().filterNot { it.id == id })
     }

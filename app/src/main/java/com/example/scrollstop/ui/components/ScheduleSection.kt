@@ -219,6 +219,7 @@ internal fun IntervalRow(
     hardBlock: Boolean,
     isActiveNow: Boolean,
     is24Hour: Boolean,
+    onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
     val s = currentStrings
@@ -226,6 +227,7 @@ internal fun IntervalRow(
     val eligibleAlone = !hardBlock && duration > SettingsManager.MIN_PERIOD_FOR_UNLOCK_MINUTES
 
     Card(
+        onClick = onEdit,
         colors = CardDefaults.cardColors(
             containerColor = if (isActiveNow) {
                 MaterialTheme.colorScheme.surfaceContainerHigh

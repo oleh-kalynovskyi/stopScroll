@@ -142,7 +142,9 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
     }
 
     var pickerStep by rememberSaveable { mutableStateOf(PickerStep.NONE) }
+    var editingIntervalId by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingStartMinute by rememberSaveable { mutableIntStateOf(9 * 60) }
+    var pendingEndMinute by rememberSaveable { mutableIntStateOf(12 * 60) }
     var intervalError by rememberSaveable { mutableStateOf<IntervalError?>(null) }
 
     CompositionLocalProvider(LocalAppStrings provides strings) {
@@ -253,6 +255,8 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
                                 message = errorText,
                                 onAddClick = {
                                     intervalError = null
+                                    editingIntervalId = null
+                                    pendingStartMinute = 9 * 60
                                     pickerStep = PickerStep.START
                                 },
                             )
@@ -263,6 +267,8 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
                                 EmptyIntervalsCard(
                                     onAddClick = {
                                         intervalError = null
+                                        editingIntervalId = null
+                                        pendingStartMinute = 9 * 60
                                         pickerStep = PickerStep.START
                                     },
                                 )
@@ -275,6 +281,13 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
                                     isActiveNow = enabled &&
                                         interval.contains(nowMillis.toLocalDateTime().let { it.hour * 60 + it.minute }),
                                     is24Hour = is24Hour,
+                                    onEdit = {
+                                        intervalError = null
+                                        editingIntervalId = interval.id
+                                        pendingStartMinute = interval.startMinute
+                                        pendingEndMinute = interval.endMinute
+                                        pickerStep = PickerStep.START
+                                    },
                                     onDelete = {
                                         settings.removeInterval(interval.id)
                                         refreshFromSettings()
@@ -303,42 +316,60 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
             PickerStep.START -> TimePickerDialog(
                 title = s.pickerStartTimeTitle,
                 confirmLabel = s.pickerNextButton,
-                initialHour = 9,
-                initialMinute = 0,
+                initialHour = pendingStartMinute / 60,
+                initialMinute = pendingStartMinute % 60,
                 is24Hour = is24Hour,
-                onDismiss = { pickerStep = PickerStep.NONE },
+                onDismiss = {
+                    pickerStep = PickerStep.NONE
+                    editingIntervalId = null
+                },
                 onConfirm = { hour, minute ->
-                    pendingStartMinute = hour * 60 + minute
+                    val newStart = hour * 60 + minute
+                    if (editingIntervalId == null) {
+                        pendingEndMinute = (newStart + 180) % MINUTES_PER_DAY
+                    }
+                    pendingStartMinute = newStart
                     pickerStep = PickerStep.END
                 },
             )
 
             PickerStep.END -> {
-                val defaultEnd = (pendingStartMinute + 180) % MINUTES_PER_DAY
                 TimePickerDialog(
                     title = s.pickerEndTimeTitle(formatMinuteOfDay(pendingStartMinute, is24Hour)),
-                    confirmLabel = s.pickerAddButton,
-                    initialHour = defaultEnd / 60,
-                    initialMinute = defaultEnd % 60,
+                    confirmLabel = if (editingIntervalId != null) s.pickerSaveButton else s.pickerAddButton,
+                    initialHour = pendingEndMinute / 60,
+                    initialMinute = pendingEndMinute % 60,
                     is24Hour = is24Hour,
-                    onDismiss = { pickerStep = PickerStep.NONE },
+                    onDismiss = {
+                        pickerStep = PickerStep.NONE
+                        editingIntervalId = null
+                    },
                     onConfirm = { hour, minute ->
                         val endMinute = hour * 60 + minute
-                        when (settings.addInterval(pendingStartMinute, endMinute)) {
+                        val editId = editingIntervalId
+                        val result = if (editId != null) {
+                            settings.updateInterval(editId, pendingStartMinute, endMinute)
+                        } else {
+                            settings.addInterval(pendingStartMinute, endMinute)
+                        }
+                        when (result) {
                             AddIntervalResult.ADDED -> {
                                 intervalError = null
                                 pickerStep = PickerStep.NONE
+                                editingIntervalId = null
                                 refreshFromSettings()
                             }
 
                             AddIntervalResult.INVALID_SAME_TIME -> {
                                 intervalError = IntervalError.SAME_TIME
                                 pickerStep = PickerStep.NONE
+                                editingIntervalId = null
                             }
 
                             AddIntervalResult.DUPLICATE -> {
                                 intervalError = IntervalError.DUPLICATE
                                 pickerStep = PickerStep.NONE
+                                editingIntervalId = null
                             }
                         }
                     },
