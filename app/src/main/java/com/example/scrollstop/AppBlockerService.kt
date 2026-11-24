@@ -7,12 +7,10 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.PixelFormat
-import android.hardware.input.InputManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
 import android.view.View
@@ -58,6 +56,7 @@ class AppBlockerService : AccessibilityService() {
         if (!::settings.isInitialized) return
 
         val pkg = event.packageName?.toString() ?: return
+        if (pkg == SYSTEM_UI_PACKAGE) return
         val cls = event.className?.toString()
 
         // Only real app switches count. Keyboards, the notification shade, toasts and
@@ -146,18 +145,10 @@ class AppBlockerService : AccessibilityService() {
     private fun showOverlay() {
         if (overlayView != null) return
 
-        val useAppOverlay = Settings.canDrawOverlays(this)
-        val type = if (useAppOverlay) {
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        } else {
-            // Fallback that an enabled accessibility service may always use.
-            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
-        }
-
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
-            type,
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
@@ -165,13 +156,11 @@ class AppBlockerService : AccessibilityService() {
             PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.TOP or Gravity.START
+            alpha = DEFAULT_OVERLAY_ALPHA
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 layoutInDisplayCutoutMode =
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             }
-            // Android 12+ blocks touches under untrusted overlays whose window alpha exceeds
-            // the max obscuring opacity (0.8 by default). Stay at/below it so touches pass through.
-            if (useAppOverlay) alpha = maxPassThroughAlpha()
         }
 
         val view = View(this).apply {
@@ -193,16 +182,12 @@ class AppBlockerService : AccessibilityService() {
         try {
             windowManager.removeViewImmediate(view)
         } catch (e: Exception) {
-            Log.w(TAG, "Overlay already removed", e)
+            try {
+                windowManager.removeView(view)
+            } catch (ignored: Exception) {
+                Log.w(TAG, "Overlay already removed", ignored)
+            }
         }
-    }
-
-    private fun maxPassThroughAlpha(): Float {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return DEFAULT_OVERLAY_ALPHA
-        val maxOpacity = getSystemService(InputManager::class.java)
-            ?.maximumObscuringOpacityForTouch
-            ?: DEFAULT_OVERLAY_ALPHA
-        return minOf(DEFAULT_OVERLAY_ALPHA, maxOpacity)
     }
 
     // endregion
@@ -214,6 +199,7 @@ class AppBlockerService : AccessibilityService() {
         val homeIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
         return packageManager.queryIntentActivities(homeIntent, 0)
             .mapNotNull { it.activityInfo?.packageName }
+            .filter { it != SYSTEM_UI_PACKAGE && it != SETTINGS_PACKAGE }
             .toSet()
     }
 
@@ -238,6 +224,8 @@ class AppBlockerService : AccessibilityService() {
 
     companion object {
         private const val TAG = "AppBlockerService"
+        private const val SYSTEM_UI_PACKAGE = "com.android.systemui"
+        private const val SETTINGS_PACKAGE = "com.android.settings"
         private const val OVERLAY_COLOR = "#CC2C2C2C"
         private const val DEFAULT_OVERLAY_ALPHA = 0.8f
         private const val PERIODIC_CHECK_MS = 3_000L
