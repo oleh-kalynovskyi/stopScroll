@@ -92,6 +92,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -964,6 +965,7 @@ private fun HourlyQuotaCard(
             ) {
                 Text(
                     text = s.quotaTitle,
+                    modifier = Modifier.width(180.dp),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -976,6 +978,7 @@ private fun HourlyQuotaCard(
             LinearProgressIndicator(
                 progress = { remainingMinutes / SettingsManager.QUOTA_MINUTES_PER_HOUR.toFloat() },
                 modifier = Modifier
+                    .padding(top = 6.dp)
                     .fillMaxWidth()
                     .height(6.dp),
                 trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
