@@ -47,6 +47,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -62,13 +63,14 @@ import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 /**
- * Full-screen block shown on top of Instagram.
+ * Full-screen block shown on top of Instagram or TikTok.
  * - Hard block (or period <= 2h): only "Exit to Home Screen".
- * - Soft block: 10-second mindful pause, then a 1..N minute unlock within the hourly quota.
+ * - Soft block: 10-second mindful pause, then a 1..N minute unlock within the shared hourly quota.
  */
 class LockScreenActivity : ComponentActivity() {
 
     private lateinit var settings: SettingsManager
+    private var targetApp by mutableStateOf(TargetApp.INSTAGRAM)
 
     override fun attachBaseContext(newBase: Context) {
         val lang = SettingsManager.getInstance(newBase).appLanguage
@@ -79,8 +81,9 @@ class LockScreenActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         settings = SettingsManager.getInstance(applicationContext)
+        targetApp = resolveTargetApp(intent)
 
-        // Back must never reveal Instagram underneath: send the user home instead.
+        // Back must never reveal the blocked app underneath: send the user home instead.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 exitToHome()
@@ -91,12 +94,19 @@ class LockScreenActivity : ComponentActivity() {
             FocusGuardTheme {
                 LockScreen(
                     settings = settings,
+                    targetApp = targetApp,
                     onExitHome = { exitToHome() },
                     onUnlock = { minutes -> unlock(minutes) },
                     onBlockLifted = { finish() },
                 )
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        targetApp = resolveTargetApp(intent)
     }
 
     override fun onUserLeaveHint() {
@@ -107,7 +117,7 @@ class LockScreenActivity : ComponentActivity() {
 
     private fun unlock(minutes: Int) {
         if (settings.startUnlock(minutes)) {
-            // Finishing returns to Instagram's task; the service then applies the gray overlay.
+            // Finishing returns to the blocked app's task; the service then applies the gray overlay.
             finish()
         }
     }
@@ -119,11 +129,21 @@ class LockScreenActivity : ComponentActivity() {
         startActivity(home)
         finish()
     }
+
+    private fun resolveTargetApp(intent: Intent?): TargetApp {
+        val name = intent?.getStringExtra(EXTRA_TARGET_APP) ?: return TargetApp.INSTAGRAM
+        return TargetApp.entries.firstOrNull { it.name == name } ?: TargetApp.INSTAGRAM
+    }
+
+    companion object {
+        const val EXTRA_TARGET_APP = "extra_target_app"
+    }
 }
 
 @Composable
 private fun LockScreen(
     settings: SettingsManager,
+    targetApp: TargetApp,
     onExitHome: () -> Unit,
     onUnlock: (Int) -> Unit,
     onBlockLifted: () -> Unit,
@@ -131,6 +151,7 @@ private fun LockScreen(
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val is24Hour = remember(configuration) { DateFormat.is24HourFormat(context) }
+    val appName = targetApp.displayName
 
     var nowMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
@@ -144,16 +165,17 @@ private fun LockScreen(
     val strings = remember(language, configuration) { stringsFor(language) }
 
     val state = remember(nowMillis) { settings.evaluate(nowMillis.toLocalDateTime()) }
+    val appSelected = remember(nowMillis, targetApp) { settings.isAppSelected(targetApp) }
     val unlockActive = state.unlockEligible && settings.isUnlockActive(nowMillis)
 
-    // Block period ended (or an unlock is already running): nothing to guard anymore.
-    LaunchedEffect(state.isBlocking, unlockActive) {
-        if (!state.isBlocking || unlockActive) onBlockLifted()
+    // Block period ended, app was deselected, or an unlock is already running: nothing to guard anymore.
+    LaunchedEffect(state.isBlocking, unlockActive, appSelected) {
+        if (!state.isBlocking || unlockActive || !appSelected) onBlockLifted()
     }
 
-    var secondsLeft by rememberSaveable { mutableIntStateOf(SettingsManager.FRICTION_SECONDS) }
+    var secondsLeft by rememberSaveable(targetApp) { mutableIntStateOf(SettingsManager.FRICTION_SECONDS) }
     if (state.unlockEligible) {
-        LaunchedEffect(Unit) {
+        LaunchedEffect(targetApp) {
             while (secondsLeft > 0) {
                 delay(1_000)
                 secondsLeft--
@@ -182,7 +204,7 @@ private fun LockScreen(
                     LockBadge()
 
                     Text(
-                        text = s.lockTitle,
+                        text = s.lockTitle(appName),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center,
@@ -190,12 +212,13 @@ private fun LockScreen(
 
                     when {
                         !state.unlockEligible -> HardBlockContent(state = state, is24Hour = is24Hour)
-                        secondsLeft > 0 -> FrictionCountdown(secondsLeft = secondsLeft)
+                        secondsLeft > 0 -> FrictionCountdown(secondsLeft = secondsLeft, appName = appName)
                         else -> {
                             val remaining = remember(nowMillis) { settings.remainingQuotaMinutes(nowMillis) }
                             val resetsAt = formatClockTime(settings.nextHourStartMillis(nowMillis), is24Hour)
                             if (remaining > 0) {
                                 UnlockSelector(
+                                    appName = appName,
                                     remainingMinutes = remaining,
                                     resetsAt = resetsAt,
                                     onUnlock = onUnlock,
@@ -273,7 +296,7 @@ private fun HardBlockContent(state: BlockState, is24Hour: Boolean) {
 }
 
 @Composable
-private fun FrictionCountdown(secondsLeft: Int) {
+private fun FrictionCountdown(secondsLeft: Int, appName: String) {
     val s = currentStrings
     val progress by animateFloatAsState(
         targetValue = secondsLeft / SettingsManager.FRICTION_SECONDS.toFloat(),
@@ -281,7 +304,7 @@ private fun FrictionCountdown(secondsLeft: Int) {
         label = "friction-progress",
     )
     Text(
-        text = s.lockFrictionPrompt,
+        text = s.lockFrictionPrompt(appName),
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
@@ -303,6 +326,7 @@ private fun FrictionCountdown(secondsLeft: Int) {
 
 @Composable
 private fun UnlockSelector(
+    appName: String,
     remainingMinutes: Int,
     resetsAt: String,
     onUnlock: (Int) -> Unit,
@@ -361,7 +385,7 @@ private fun UnlockSelector(
         ) {
             Icon(Icons.Rounded.LockOpen, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text(s.lockUnlockButton)
+            Text(s.lockUnlockButton(appName))
         }
         Text(
             text = s.lockGrayScreenHint,

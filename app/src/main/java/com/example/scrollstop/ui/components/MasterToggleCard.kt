@@ -7,12 +7,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -27,12 +32,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.scrollstop.BlockState
 import com.example.scrollstop.SettingsManager
+import com.example.scrollstop.TargetApp
 import com.example.scrollstop.currentStrings
 import com.example.scrollstop.formatMinuteOfDay
 
 @Composable
 internal fun MasterToggleCard(
     enabled: Boolean,
+    selectedApps: Set<TargetApp>,
+    showMinOneAppHint: Boolean,
     accessibilityGranted: Boolean,
     blockState: BlockState,
     unlockActive: Boolean,
@@ -40,9 +48,14 @@ internal fun MasterToggleCard(
     nowMillis: Long,
     is24Hour: Boolean,
     onToggle: (Boolean) -> Unit,
+    onAppToggle: (TargetApp, Boolean) -> Unit,
     onEndUnlock: () -> Unit,
 ) {
     val s = currentStrings
+    val appsLabel = TargetApp.entries
+        .filter { it in selectedApps }
+        .joinToString(separator = s.appsConjunction) { it.displayName }
+
     val statusText = when {
         !enabled -> s.statusPaused
         !accessibilityGranted -> s.statusWaitingAccessibility
@@ -55,14 +68,14 @@ internal fun MasterToggleCard(
             val end = blockState.endMinuteOfDay
                 ?.let { s.untilTime(formatMinuteOfDay(it, is24Hour)) }
                 ?: s.allDaySuffix
-            s.statusHardBlockingNow(end)
+            s.statusHardBlockingNow(appsLabel, end)
         }
 
         blockState.isBlocking -> {
             val end = blockState.endMinuteOfDay
                 ?.let { s.untilTime(formatMinuteOfDay(it, is24Hour)) }
                 ?: s.allDaySuffix
-            s.statusBlockingNow(end)
+            s.statusBlockingNow(appsLabel, end)
         }
 
         else -> s.statusArmedOutsideHours
@@ -104,6 +117,58 @@ internal fun MasterToggleCard(
                     )
                 }
                 Switch(checked = enabled, onCheckedChange = null)
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = s.blockedAppsTitle,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    text = s.blockedAppsHint,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    TargetApp.entries.forEach { app ->
+                        val isSelected = app in selectedApps
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { onAppToggle(app, !isSelected) },
+                            label = {
+                                Text(
+                                    text = app.displayName,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                )
+                            },
+                            leadingIcon = if (isSelected) {
+                                {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Check,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(FilterChipDefaults.IconSize),
+                                    )
+                                }
+                            } else {
+                                null
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+                if (showMinOneAppHint) {
+                    Text(
+                        text = s.minOneAppRequiredHint,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.tertiary,
+                    )
+                }
             }
 
             if (unlockActive) {

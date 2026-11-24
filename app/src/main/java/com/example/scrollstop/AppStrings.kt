@@ -85,11 +85,15 @@ data class AppStrings(
     val actionGrant: String,
     // Master toggle card
     val masterBlockerTitle: String,
+    val blockedAppsTitle: String,
+    val blockedAppsHint: String,
+    val minOneAppRequiredHint: String,
+    val appsConjunction: String,
     val statusPaused: String,
     val statusWaitingAccessibility: String,
     val statusUnlockActive: (mm: Long, ss: Long) -> String,
-    val statusHardBlockingNow: (untilPart: String) -> String,
-    val statusBlockingNow: (untilPart: String) -> String,
+    val statusHardBlockingNow: (appsLabel: String, untilPart: String) -> String,
+    val statusBlockingNow: (appsLabel: String, untilPart: String) -> String,
     val statusArmedOutsideHours: String,
     val untilTime: (time: String) -> String,
     val allDaySuffix: String,
@@ -131,17 +135,17 @@ data class AppStrings(
     val errSameStartEnd: String,
     val errDuplicateInterval: String,
     // Lock screen
-    val lockTitle: String,
+    val lockTitle: (appName: String) -> String,
     val lockHardBlockEnabledReason: String,
     val lockShortPeriodReason: (duration: String) -> String,
     val lockLiftsAt: (time: String) -> String,
     val lockRunsAllDay: String,
     val lockChangeInAppHint: String,
-    val lockFrictionPrompt: String,
+    val lockFrictionPrompt: (appName: String) -> String,
     val lockUnlockForLabel: String,
     val lockMinutesValue: (min: Int) -> String,
     val lockQuotaRemainingSub: (remaining: Int, total: Int, resetsAt: String) -> String,
-    val lockUnlockButton: String,
+    val lockUnlockButton: (appName: String) -> String,
     val lockGrayScreenHint: String,
     val lockQuotaExhaustedTitle: String,
     val lockNextWindowOpensAt: (resetsAt: String) -> String,
@@ -152,39 +156,43 @@ data class AppStrings(
 
 val EnglishStrings = AppStrings(
     isUkrainian = false,
-    appSubtitle = "Instagram blocker · ${SettingsManager.TARGET_PACKAGE}",
+    appSubtitle = "Instagram & TikTok blocker",
     languageMenuTitle = "App language",
     languageSystem = "System language",
     languageEnglish = "English",
     languageUkrainian = "Українська",
     permissionsTitle = "Permissions Dashboard",
     permissionsAllActive = "All required system permissions are active.",
-    permissionsGrantBoth = "Grant both permissions so FocusGuard can detect and dim Instagram.",
+    permissionsGrantBoth = "Grant both permissions so FocusGuard can detect and dim Instagram and TikTok.",
     permOverlayTitle = "Display Over Other Apps",
     permOverlaySubtitle = "Renders the pass-through gray tint during temporary unlocks",
     permAccessibilityTitle = "Accessibility Service",
-    permAccessibilitySubtitle = "Detects when Instagram comes to the foreground",
+    permAccessibilitySubtitle = "Detects when Instagram or TikTok comes to the foreground",
     actionSettings = "Settings",
     actionGrant = "Grant",
     masterBlockerTitle = "Master Blocker",
+    blockedAppsTitle = "Guarded apps",
+    blockedAppsHint = "Select one or both apps to block",
+    minOneAppRequiredHint = "At least one app must remain selected.",
+    appsConjunction = " & ",
     statusPaused = "Blocker is paused",
     statusWaitingAccessibility = "Waiting for Accessibility Service permission",
     statusUnlockActive = { mm, ss ->
         "Temporary unlock active · %d:%02d left (gray screen on)".format(mm, ss)
     },
-    statusHardBlockingNow = { untilPart -> "Hard-blocking Instagram now$untilPart" },
-    statusBlockingNow = { untilPart -> "Blocking Instagram now$untilPart · 15m/h unlock allowed" },
+    statusHardBlockingNow = { appsLabel, untilPart -> "Hard-blocking $appsLabel now$untilPart" },
+    statusBlockingNow = { appsLabel, untilPart -> "Blocking $appsLabel now$untilPart · 15m/h unlock allowed" },
     statusArmedOutsideHours = "Armed · outside scheduled blocking hours",
     untilTime = { time -> " until $time" },
     allDaySuffix = " (24/7)",
-    endUnlockNowButton = "End unlock & re-lock Instagram now",
+    endUnlockNowButton = "End unlock & re-lock apps now",
     scheduleTitle = "Blocking Schedule",
     modeAllDay = "All Day (24/7)",
     modeCustomPeriods = "Custom Periods",
     ruleHardBlockOn = "Hard Block is ON: no temporary unlocks are offered in any mode. " +
-        "Instagram stays locked until you turn the blocker off here.",
+        "Instagram and TikTok stay locked until you turn the blocker off here.",
     ruleAllDay = { quotaMin, frictionSec ->
-        "All Day is > 2 hours, so you can unlock Instagram for up to $quotaMin minutes per clock hour " +
+        "All Day is > 2 hours, so you can unlock Instagram and TikTok for up to $quotaMin minutes in total per clock hour " +
             "(after a ${frictionSec}s pause, with a gray screen)."
     },
     ruleCustomEmpty = { quotaMin ->
@@ -201,7 +209,7 @@ val EnglishStrings = AppStrings(
     overnightSupportedSubtitle = "Overnight ranges (e.g. 22:00 – 02:00) are supported",
     addPeriodChip = "Add period",
     noPeriodsTitle = "No time periods yet",
-    noPeriodsSubtitle = "Instagram won't be blocked in Custom mode until you add at least one interval.",
+    noPeriodsSubtitle = "Instagram and TikTok won't be blocked in Custom mode until you add at least one interval.",
     addTimePeriodButton = "Add Time Period",
     activeBadge = "Active",
     intervalHardBlockTag = "Hard Block enabled",
@@ -222,7 +230,7 @@ val EnglishStrings = AppStrings(
     pickerToggleInputDesc = "Toggle time input mode",
     errSameStartEnd = "Start and end times are the same. Pick two different times (use All Day mode for 24/7).",
     errDuplicateInterval = "That time period is already in your list.",
-    lockTitle = "Instagram is blocked",
+    lockTitle = { appName -> "$appName is blocked" },
     lockHardBlockEnabledReason = "Hard Block is on. There is no way to unlock from here.",
     lockShortPeriodReason = { duration ->
         "This focus period is $duration long. Periods of 2 hours or less can't be unlocked."
@@ -230,13 +238,13 @@ val EnglishStrings = AppStrings(
     lockLiftsAt = { time -> "The block lifts at $time." },
     lockRunsAllDay = "This block runs all day.",
     lockChangeInAppHint = "To lift it earlier, open FocusGuard and change your settings.",
-    lockFrictionPrompt = "Take a breath. Do you really need Instagram right now?",
+    lockFrictionPrompt = { appName -> "Take a breath. Do you really need $appName right now?" },
     lockUnlockForLabel = "Unlock for",
     lockMinutesValue = { min -> "$min min" },
     lockQuotaRemainingSub = { remaining, total, resetsAt ->
         "$remaining of $total min left this hour · resets at $resetsAt"
     },
-    lockUnlockButton = "Unlock Instagram",
+    lockUnlockButton = { appName -> "Unlock $appName" },
     lockGrayScreenHint = "The screen will be tinted gray while unlocked.",
     lockQuotaExhaustedTitle = "15-minute hourly limit reached. Try again next hour.",
     lockNextWindowOpensAt = { resetsAt -> "Your next unlock window opens at $resetsAt." },
@@ -254,29 +262,33 @@ val EnglishStrings = AppStrings(
 
 val UkrainianStrings = AppStrings(
     isUkrainian = true,
-    appSubtitle = "Блокувальник Instagram · ${SettingsManager.TARGET_PACKAGE}",
+    appSubtitle = "Блокувальник Instagram та TikTok",
     languageMenuTitle = "Мова застосунку",
     languageSystem = "Системна мова",
     languageEnglish = "English",
     languageUkrainian = "Українська",
     permissionsTitle = "Панель дозволів",
     permissionsAllActive = "Усі необхідні системні дозволи надано.",
-    permissionsGrantBoth = "Надайте обидва дозволи, щоб FocusGuard міг виявляти та затемнювати Instagram.",
+    permissionsGrantBoth = "Надайте обидва дозволи, щоб FocusGuard міг виявляти та затемнювати Instagram і TikTok.",
     permOverlayTitle = "Відображення поверх інших вікон",
     permOverlaySubtitle = "Накладає прозорий сірий фільтр під час тимчасового розблокування",
     permAccessibilityTitle = "Служба спеціальних можливостей",
-    permAccessibilitySubtitle = "Виявляє, коли Instagram відкривається на екрані",
+    permAccessibilitySubtitle = "Виявляє, коли Instagram або TikTok відкривається на екрані",
     actionSettings = "Налаштування",
     actionGrant = "Надати",
     masterBlockerTitle = "Головний перемикач",
+    blockedAppsTitle = "Застосунки для блокування",
+    blockedAppsHint = "Оберіть один або обидва застосунки",
+    minOneAppRequiredHint = "Має бути обраний хоча б один застосунок.",
+    appsConjunction = " і ",
     statusPaused = "Блокувальник призупинено",
     statusWaitingAccessibility = "Очікування дозволу Служби спеціальних можливостей",
     statusUnlockActive = { mm, ss ->
         "Тимчасове розблокування · залишилось %d:%02d (сірий екран)".format(mm, ss)
     },
-    statusHardBlockingNow = { untilPart -> "Жорстке блокування Instagram активне$untilPart" },
-    statusBlockingNow = { untilPart ->
-        "Блокування Instagram активне$untilPart · доступно 15 хв/год"
+    statusHardBlockingNow = { appsLabel, untilPart -> "Жорстке блокування $appsLabel активне$untilPart" },
+    statusBlockingNow = { appsLabel, untilPart ->
+        "Блокування $appsLabel активне$untilPart · доступно 15 хв/год"
     },
     statusArmedOutsideHours = "Увімкнено · поза розкладом блокування",
     untilTime = { time -> " до $time" },
@@ -286,9 +298,9 @@ val UkrainianStrings = AppStrings(
     modeAllDay = "Весь день (24/7)",
     modeCustomPeriods = "Власні періоди",
     ruleHardBlockOn = "Жорстке блокування УВІМКНЕНО: тимчасові розблокування недоступні в жодному режимі. " +
-        "Instagram заблоковано, доки ви не вимкнете блокувальник тут.",
+        "Instagram і TikTok заблоковано, доки ви не вимкнете блокувальник тут.",
     ruleAllDay = { quotaMin, frictionSec ->
-        "Режим «Весь день» триває > 2 годин, тому Instagram можна розблокувати до $quotaMin хв на годину " +
+        "Режим «Весь день» триває > 2 годин, тому Instagram і TikTok можна розблокувати загалом до $quotaMin хв на годину " +
             "(після ${frictionSec}-секундної паузи, із сірим екраном)."
     },
     ruleCustomEmpty = { quotaMin ->
@@ -305,7 +317,7 @@ val UkrainianStrings = AppStrings(
     overnightSupportedSubtitle = "Підтримуються нічні інтервали (напр. 22:00 – 02:00)",
     addPeriodChip = "Додати період",
     noPeriodsTitle = "Часових періодів ще немає",
-    noPeriodsSubtitle = "У режимі власних періодів Instagram не блокуватиметься, доки ви не додасте хоча б один інтервал.",
+    noPeriodsSubtitle = "У режимі власних періодів Instagram і TikTok не блокуватимуться, доки ви не додасте хоча б один інтервал.",
     addTimePeriodButton = "Додати часовий період",
     activeBadge = "Активний",
     intervalHardBlockTag = "Жорстке блокування",
@@ -326,7 +338,7 @@ val UkrainianStrings = AppStrings(
     pickerToggleInputDesc = "Змінити спосіб введення часу",
     errSameStartEnd = "Час початку та закінчення збігається. Оберіть різний час (для 24/7 використовуйте «Весь день»).",
     errDuplicateInterval = "Цей часовий період уже є у списку.",
-    lockTitle = "Instagram заблоковано",
+    lockTitle = { appName -> "$appName заблоковано" },
     lockHardBlockEnabledReason = "Увімкнено Жорстке блокування. Розблокування з цього екрана неможливе.",
     lockShortPeriodReason = { duration ->
         "Цей період концентрації триває $duration. Періоди тривалістю 2 години або менше не можна розблокувати."
@@ -334,13 +346,13 @@ val UkrainianStrings = AppStrings(
     lockLiftsAt = { time -> "Блокування завершиться о $time." },
     lockRunsAllDay = "Блокування діє весь день.",
     lockChangeInAppHint = "Щоб зняти блокування раніше, відкрийте FocusGuard і змініть налаштування.",
-    lockFrictionPrompt = "Зробіть вдих. Вам справді зараз потрібен Instagram?",
+    lockFrictionPrompt = { appName -> "Зробіть вдих. Вам справді зараз потрібен $appName?" },
     lockUnlockForLabel = "Розблокувати на",
     lockMinutesValue = { min -> "$min хв" },
     lockQuotaRemainingSub = { remaining, total, resetsAt ->
         "Залишилось $remaining із $total хв у цій годині · оновлення о $resetsAt"
     },
-    lockUnlockButton = "Розблокувати Instagram",
+    lockUnlockButton = { appName -> "Розблокувати $appName" },
     lockGrayScreenHint = "Під час розблокування екран буде чорно-сірим.",
     lockQuotaExhaustedTitle = "15-хвилинний ліміт на цю годину вичерпано. Спробуйте наступної години.",
     lockNextWindowOpensAt = { resetsAt -> "Наступне вікно розблокування відкриється о $resetsAt." },

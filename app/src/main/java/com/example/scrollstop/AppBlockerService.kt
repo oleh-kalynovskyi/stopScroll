@@ -18,10 +18,11 @@ import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 
 /**
- * Watches foreground window changes and enforces the FocusGuard rules for Instagram:
- *  - launches [LockScreenActivity] when Instagram is opened during an active block,
+ * Watches foreground window changes and enforces the FocusGuard rules for guarded apps
+ * (Instagram and TikTok):
+ *  - launches [LockScreenActivity] when a guarded app is opened during an active block,
  *  - shows a pass-through gray overlay while a temporary unlock is running,
- *  - re-locks Instagram the moment the unlock expires.
+ *  - re-locks the app the moment the unlock expires.
  */
 class AppBlockerService : AccessibilityService() {
 
@@ -32,6 +33,7 @@ class AppBlockerService : AccessibilityService() {
     private var overlayView: View? = null
     private var foregroundPackage: String? = null
     private var lastLockLaunchAt = 0L
+    private var lastLockedApp: TargetApp? = null
     private var launcherPackages: Set<String> = emptySet()
     private val activityCache = HashMap<String, Boolean>()
 
@@ -61,7 +63,7 @@ class AppBlockerService : AccessibilityService() {
 
         // Only real app switches count. Keyboards, the notification shade, toasts and
         // our own overlay window are not activities and must not hide/show anything.
-        val isAppSwitch = pkg == SettingsManager.TARGET_PACKAGE ||
+        val isAppSwitch = TargetApp.fromPackage(pkg) != null ||
             pkg in launcherPackages ||
             isActivity(pkg, cls)
         if (!isAppSwitch) return
@@ -87,7 +89,8 @@ class AppBlockerService : AccessibilityService() {
         handler.removeCallbacks(evaluateRunnable)
         if (!::settings.isInitialized) return
 
-        if (foregroundPackage != SettingsManager.TARGET_PACKAGE) {
+        val targetApp = TargetApp.fromPackage(foregroundPackage)
+        if (targetApp == null || !settings.isAppSelected(targetApp)) {
             hideOverlay()
             return
         }
@@ -110,7 +113,7 @@ class AppBlockerService : AccessibilityService() {
 
             else -> {
                 hideOverlay()
-                launchLockScreen()
+                launchLockScreen(targetApp)
                 scheduleEvaluation(PERIODIC_CHECK_MS)
             }
         }
@@ -121,16 +124,19 @@ class AppBlockerService : AccessibilityService() {
         handler.postDelayed(evaluateRunnable, delayMs.coerceAtLeast(0L))
     }
 
-    private fun launchLockScreen() {
+    private fun launchLockScreen(targetApp: TargetApp) {
         val now = SystemClock.elapsedRealtime()
-        if (now - lastLockLaunchAt < LOCK_RELAUNCH_DEBOUNCE_MS) return
+        if (targetApp == lastLockedApp && now - lastLockLaunchAt < LOCK_RELAUNCH_DEBOUNCE_MS) return
         lastLockLaunchAt = now
+        lastLockedApp = targetApp
 
-        val intent = Intent(this, LockScreenActivity::class.java).addFlags(
-            Intent.FLAG_ACTIVITY_NEW_TASK or
-                Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                Intent.FLAG_ACTIVITY_CLEAR_TOP
-        )
+        val intent = Intent(this, LockScreenActivity::class.java)
+            .putExtra(LockScreenActivity.EXTRA_TARGET_APP, targetApp.name)
+            .addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP
+            )
         try {
             startActivity(intent)
         } catch (e: Exception) {

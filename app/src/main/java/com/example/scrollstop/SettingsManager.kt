@@ -49,6 +49,32 @@ enum class ScheduleMode { ALL_DAY, CUSTOM }
 enum class AddIntervalResult { ADDED, INVALID_SAME_TIME, DUPLICATE }
 
 /**
+ * Supported short-video / social apps guarded by FocusGuard under a shared schedule and quota.
+ */
+enum class TargetApp(
+    val displayName: String,
+    val packages: Set<String>,
+) {
+    INSTAGRAM(
+        displayName = "Instagram",
+        packages = setOf("com.instagram.android"),
+    ),
+    TIKTOK(
+        displayName = "TikTok",
+        packages = setOf(
+            "com.zhiliaoapp.musically",
+            "com.ss.android.ugc.trill",
+            "com.zhiliaoapp.musically.go",
+        ),
+    );
+
+    companion object {
+        fun fromPackage(pkg: String?): TargetApp? =
+            if (pkg == null) null else entries.firstOrNull { pkg in it.packages }
+    }
+}
+
+/**
  * Result of evaluating the schedule at a given moment.
  *
  * @param isBlocking       Instagram must be blocked right now.
@@ -118,6 +144,31 @@ class SettingsManager private constructor(context: Context) {
             ?.let { name -> AppLanguage.entries.firstOrNull { it.name == name } }
             ?: AppLanguage.SYSTEM
         set(value) = prefs.edit { putString(KEY_LANGUAGE, value.name) }
+
+    fun isAppSelected(app: TargetApp): Boolean =
+        prefs.getBoolean(appSelectionKey(app), true)
+
+    fun getSelectedApps(): Set<TargetApp> {
+        val selected = TargetApp.entries.filter { isAppSelected(it) }.toSet()
+        return selected.ifEmpty { setOf(TargetApp.INSTAGRAM) }
+    }
+
+    /**
+     * Enables or disables blocking for [app].
+     * At least one app must remain selected (either both apps or one of them).
+     *
+     * @return true if the selection was updated, false if blocked because [app] is the last active app.
+     */
+    fun setAppSelected(app: TargetApp, selected: Boolean): Boolean {
+        if (!selected) {
+            val othersSelected = TargetApp.entries.any { it != app && isAppSelected(it) }
+            if (!othersSelected) return false
+        }
+        prefs.edit { putBoolean(appSelectionKey(app), selected) }
+        return true
+    }
+
+    private fun appSelectionKey(app: TargetApp): String = "$KEY_APP_SELECTED_PREFIX${app.name}"
 
     // endregion
 
@@ -323,6 +374,7 @@ class SettingsManager private constructor(context: Context) {
         private const val KEY_USAGE = "hourly_usage"
         private const val KEY_UNLOCK_UNTIL = "unlock_until"
         private const val KEY_LANGUAGE = "app_language"
+        private const val KEY_APP_SELECTED_PREFIX = "app_selected_"
 
         @Volatile
         private var instance: SettingsManager? = null

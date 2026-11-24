@@ -78,6 +78,8 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
     val is24Hour = remember(configuration) { DateFormat.is24HourFormat(context) }
 
     var enabled by remember { mutableStateOf(settings.isEnabled) }
+    var selectedApps by remember { mutableStateOf(settings.getSelectedApps()) }
+    var showMinOneAppHint by remember { mutableStateOf(false) }
     var mode by remember { mutableStateOf(settings.scheduleMode) }
     var hardBlock by remember { mutableStateOf(settings.isHardBlock) }
     var intervals by remember { mutableStateOf(settings.getIntervals()) }
@@ -89,6 +91,7 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
 
     fun refreshFromSettings() {
         enabled = settings.isEnabled
+        selectedApps = settings.getSelectedApps()
         mode = settings.scheduleMode
         hardBlock = settings.isHardBlock
         intervals = settings.getIntervals()
@@ -198,6 +201,8 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
                     item(key = "master") {
                         MasterToggleCard(
                             enabled = enabled,
+                            selectedApps = selectedApps,
+                            showMinOneAppHint = showMinOneAppHint,
                             accessibilityGranted = accessibilityGranted,
                             blockState = blockState,
                             unlockActive = unlockActive,
@@ -206,6 +211,11 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
                             is24Hour = is24Hour,
                             onToggle = {
                                 settings.isEnabled = it
+                                refreshFromSettings()
+                            },
+                            onAppToggle = { app, selected ->
+                                val updated = settings.setAppSelected(app, selected)
+                                showMinOneAppHint = !updated
                                 refreshFromSettings()
                             },
                             onEndUnlock = {

@@ -11,7 +11,12 @@ import org.junit.Assert.*
  */
 class ExampleUnitTest {
     @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+    fun targetApp_resolvesInstagramAndTikTokPackages() {
+        assertEquals(TargetApp.INSTAGRAM, TargetApp.fromPackage("com.instagram.android"))
+        assertEquals(TargetApp.TIKTOK, TargetApp.fromPackage("com.zhiliaoapp.musically"))
+        assertEquals(TargetApp.TIKTOK, TargetApp.fromPackage("com.ss.android.ugc.trill"))
+        assertEquals(TargetApp.TIKTOK, TargetApp.fromPackage("com.zhiliaoapp.musically.go"))
+        assertNull(TargetApp.fromPackage("com.android.settings"))
+        assertNull(TargetApp.fromPackage(null))
     }
 }
