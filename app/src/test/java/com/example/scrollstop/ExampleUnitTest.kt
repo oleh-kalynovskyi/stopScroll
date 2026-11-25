@@ -9,17 +9,19 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Local unit tests for FocusGuard domain logic, session limits, and localization. */
+/**
+ * Local unit tests for FocusGuard domain logic, session limits, and localization.
+ */
 class ExampleUnitTest {
 
     private fun newSettings(): SettingsManager =
-            SettingsManager(InMemorySharedPreferences(), zoneProvider = { ZoneOffset.UTC })
+        SettingsManager(InMemorySharedPreferences(), zoneProvider = { ZoneOffset.UTC })
 
     private fun advanceUsage(
-            settings: SettingsManager,
-            totalMs: Long,
-            startMillis: Long,
-            stepMs: Long = 5_000L,
+        settings: SettingsManager,
+        totalMs: Long,
+        startMillis: Long,
+        stepMs: Long = 5_000L,
     ): List<SessionTickResult> {
         val results = mutableListOf<SessionTickResult>()
         var remaining = totalMs
@@ -51,17 +53,17 @@ class ExampleUnitTest {
     fun appLanguage_allLanguagesResolveStringsAndFormatting() {
         val explicitLanguages = AppLanguage.entries.filter { it != AppLanguage.SYSTEM }
         assertEquals(
-                listOf(
-                        AppLanguage.EN,
-                        AppLanguage.UK,
-                        AppLanguage.DE,
-                        AppLanguage.ES,
-                        AppLanguage.FR,
-                        AppLanguage.PT,
-                        AppLanguage.IT,
-                        AppLanguage.PL,
-                ),
-                explicitLanguages,
+            listOf(
+                AppLanguage.EN,
+                AppLanguage.UK,
+                AppLanguage.DE,
+                AppLanguage.ES,
+                AppLanguage.FR,
+                AppLanguage.PT,
+                AppLanguage.IT,
+                AppLanguage.PL,
+            ),
+            explicitLanguages,
         )
 
         for (lang in explicitLanguages) {
@@ -99,9 +101,7 @@ class ExampleUnitTest {
         // Before reaching 2 minutes left (use 2m 55s = 175_000 ms -> 2m 05s left)
         val beforeWarning = advanceUsage(settings, 175_000L, base)
         assertTrue(beforeWarning.all { it == SessionTickResult.ACTIVE })
-        assertFalse(
-                settings.evaluate(LocalDateTime.of(2026, 1, 1, 12, 0), base + 175_000L).isBlocking
-        )
+        assertFalse(settings.evaluate(LocalDateTime.of(2026, 1, 1, 12, 0), base + 175_000L).isBlocking)
 
         // Crossing 2-minute threshold (use 5_000 ms -> 180_000 ms used, 120_000 ms = 2m left)
         val atWarning = settings.recordSessionUsage(5_000L, base + 180_000L)
@@ -114,12 +114,11 @@ class ExampleUnitTest {
         // Final 5_000 ms exhausts the 5-min allowance -> 1-hour hard cooldown starts
         val cooldownStart = base + 300_000L
         assertEquals(
-                SessionTickResult.COOLDOWN_STARTED,
-                settings.recordSessionUsage(5_000L, cooldownStart),
+            SessionTickResult.COOLDOWN_STARTED,
+            settings.recordSessionUsage(5_000L, cooldownStart),
         )
 
-        val blockState =
-                settings.evaluate(LocalDateTime.of(2026, 1, 1, 12, 5), cooldownStart + 1_000L)
+        val blockState = settings.evaluate(LocalDateTime.of(2026, 1, 1, 12, 5), cooldownStart + 1_000L)
         assertTrue(blockState.isBlocking)
         assertFalse(blockState.unlockEligible)
         assertTrue(blockState.hardBlockEnabled)
@@ -128,15 +127,13 @@ class ExampleUnitTest {
 
         // While cooldown is active, ticks report COOLDOWN_ACTIVE
         assertEquals(
-                SessionTickResult.COOLDOWN_ACTIVE,
-                settings.recordSessionUsage(5_000L, cooldownStart + 10 * 60_000L),
+            SessionTickResult.COOLDOWN_ACTIVE,
+            settings.recordSessionUsage(5_000L, cooldownStart + 10 * 60_000L),
         )
 
         // Once 1 hour elapses, block lifts and full 5-min allowance is restored
         val afterCooldown = cooldownStart + 60 * 60_000L
-        assertFalse(
-                settings.evaluate(LocalDateTime.of(2026, 1, 1, 13, 5), afterCooldown).isBlocking
-        )
+        assertFalse(settings.evaluate(LocalDateTime.of(2026, 1, 1, 13, 5), afterCooldown).isBlocking)
         val freshStatus = settings.getSessionStatus(afterCooldown)
         assertFalse(freshStatus.isCooldownActive)
         assertEquals(0L, freshStatus.usedMillis)
@@ -167,12 +164,12 @@ class ExampleUnitTest {
 
         // Recording a new 5s tick after 60 min inactivity starts fresh from 0
         assertEquals(
-                SessionTickResult.ACTIVE,
-                settings.recordSessionUsage(5_000L, lastActive + 60 * 60_000L + 5_000L),
+            SessionTickResult.ACTIVE,
+            settings.recordSessionUsage(5_000L, lastActive + 60 * 60_000L + 5_000L),
         )
         assertEquals(
-                5_000L,
-                settings.getSessionStatus(lastActive + 60 * 60_000L + 5_000L).usedMillis,
+            5_000L,
+            settings.getSessionStatus(lastActive + 60 * 60_000L + 5_000L).usedMillis,
         )
     }
 
@@ -204,58 +201,39 @@ private class InMemorySharedPreferences : SharedPreferences {
     private val map = LinkedHashMap<String, Any?>()
 
     override fun getAll(): MutableMap<String, *> = LinkedHashMap(map)
-    override fun getString(key: String?, defValue: String?): String? =
-            map[key] as? String ?: defValue
+    override fun getString(key: String?, defValue: String?): String? = map[key] as? String ?: defValue
     @Suppress("UNCHECKED_CAST")
     override fun getStringSet(key: String?, defValues: MutableSet<String>?): MutableSet<String>? =
-            (map[key] as? Set<String>)?.toMutableSet() ?: defValues
+        (map[key] as? Set<String>)?.toMutableSet() ?: defValues
     override fun getInt(key: String?, defValue: Int): Int = map[key] as? Int ?: defValue
     override fun getLong(key: String?, defValue: Long): Long = map[key] as? Long ?: defValue
     override fun getFloat(key: String?, defValue: Float): Float = map[key] as? Float ?: defValue
-    override fun getBoolean(key: String?, defValue: Boolean): Boolean =
-            map[key] as? Boolean ?: defValue
+    override fun getBoolean(key: String?, defValue: Boolean): Boolean = map[key] as? Boolean ?: defValue
     override fun contains(key: String?): Boolean = map.containsKey(key)
-    override fun registerOnSharedPreferenceChangeListener(
-            listener: SharedPreferences.OnSharedPreferenceChangeListener?
-    ) = Unit
-    override fun unregisterOnSharedPreferenceChangeListener(
-            listener: SharedPreferences.OnSharedPreferenceChangeListener?
-    ) = Unit
+    override fun registerOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener?) = Unit
+    override fun unregisterOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener?) = Unit
 
-    override fun edit(): SharedPreferences.Editor =
-            object : SharedPreferences.Editor {
-                private val pending = LinkedHashMap<String, Any?>()
-                private val removals = HashSet<String>()
-                private var clearAll = false
+    override fun edit(): SharedPreferences.Editor = object : SharedPreferences.Editor {
+        private val pending = LinkedHashMap<String, Any?>()
+        private val removals = HashSet<String>()
+        private var clearAll = false
 
-                override fun putString(key: String?, value: String?) = apply {
-                    if (key != null) pending[key] = value
-                }
-                override fun putStringSet(key: String?, values: MutableSet<String>?) = apply {
-                    if (key != null) pending[key] = values?.toSet()
-                }
-                override fun putInt(key: String?, value: Int) = apply {
-                    if (key != null) pending[key] = value
-                }
-                override fun putLong(key: String?, value: Long) = apply {
-                    if (key != null) pending[key] = value
-                }
-                override fun putFloat(key: String?, value: Float) = apply {
-                    if (key != null) pending[key] = value
-                }
-                override fun putBoolean(key: String?, value: Boolean) = apply {
-                    if (key != null) pending[key] = value
-                }
-                override fun remove(key: String?) = apply { if (key != null) removals.add(key) }
-                override fun clear() = apply { clearAll = true }
-                override fun commit(): Boolean {
-                    apply()
-                    return true
-                }
-                override fun apply() {
-                    if (clearAll) map.clear()
-                    removals.forEach { map.remove(it) }
-                    map.putAll(pending)
-                }
-            }
+        override fun putString(key: String?, value: String?) = apply { if (key != null) pending[key] = value }
+        override fun putStringSet(key: String?, values: MutableSet<String>?) = apply { if (key != null) pending[key] = values?.toSet() }
+        override fun putInt(key: String?, value: Int) = apply { if (key != null) pending[key] = value }
+        override fun putLong(key: String?, value: Long) = apply { if (key != null) pending[key] = value }
+        override fun putFloat(key: String?, value: Float) = apply { if (key != null) pending[key] = value }
+        override fun putBoolean(key: String?, value: Boolean) = apply { if (key != null) pending[key] = value }
+        override fun remove(key: String?) = apply { if (key != null) removals.add(key) }
+        override fun clear() = apply { clearAll = true }
+        override fun commit(): Boolean {
+            apply()
+            return true
+        }
+        override fun apply() {
+            if (clearAll) map.clear()
+            removals.forEach { map.remove(it) }
+            map.putAll(pending)
+        }
+    }
 }
