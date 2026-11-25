@@ -18,159 +18,135 @@ import java.util.UUID
 const val MINUTES_PER_DAY = 24 * 60
 
 /**
- * A blocking interval expressed in minutes from midnight (0..1439). If [endMinute] <= [startMinute]
- * the interval crosses midnight (e.g. 22:00 - 02:00).
+ * A blocking interval expressed in minutes from midnight (0..1439).
+ * If [endMinute] <= [startMinute] the interval crosses midnight (e.g. 22:00 - 02:00).
  */
 data class TimeInterval(
-        val id: String = UUID.randomUUID().toString(),
-        val startMinute: Int,
-        val endMinute: Int,
+    val id: String = UUID.randomUUID().toString(),
+    val startMinute: Int,
+    val endMinute: Int,
 ) {
     val crossesMidnight: Boolean
         get() = endMinute <= startMinute
 
     val durationMinutes: Int
-        get() =
-                if (endMinute > startMinute) {
-                    endMinute - startMinute
-                } else {
-                    MINUTES_PER_DAY - startMinute + endMinute
-                }
+        get() = if (endMinute > startMinute) {
+            endMinute - startMinute
+        } else {
+            MINUTES_PER_DAY - startMinute + endMinute
+        }
 
     fun contains(minuteOfDay: Int): Boolean =
-            if (!crossesMidnight) {
-                minuteOfDay in startMinute until endMinute
-            } else {
-                minuteOfDay >= startMinute || minuteOfDay < endMinute
-            }
+        if (!crossesMidnight) {
+            minuteOfDay in startMinute until endMinute
+        } else {
+            minuteOfDay >= startMinute || minuteOfDay < endMinute
+        }
 }
 
-enum class ScheduleMode {
-    ALL_DAY,
-    CUSTOM,
-    SESSION_LIMIT
-}
+enum class ScheduleMode { ALL_DAY, CUSTOM, SESSION_LIMIT }
 
-enum class SessionTickResult {
-    ACTIVE,
-    SHOW_WARNING,
-    COOLDOWN_STARTED,
-    COOLDOWN_ACTIVE
-}
+enum class SessionTickResult { ACTIVE, SHOW_WARNING, COOLDOWN_STARTED, COOLDOWN_ACTIVE }
 
 data class SessionStatus(
-        val limitMinutes: Int,
-        val usedMillis: Long,
-        val remainingMillis: Long,
-        val cooldownUntilMillis: Long,
-        val isCooldownActive: Boolean,
-        val resetsAtMillis: Long? = null,
+    val limitMinutes: Int,
+    val usedMillis: Long,
+    val remainingMillis: Long,
+    val cooldownUntilMillis: Long,
+    val isCooldownActive: Boolean,
+    val resetsAtMillis: Long? = null,
 )
 
-enum class AddIntervalResult {
-    ADDED,
-    INVALID_SAME_TIME,
-    DUPLICATE
-}
+enum class AddIntervalResult { ADDED, INVALID_SAME_TIME, DUPLICATE }
 
-/** Supported short-video / social apps guarded by FocusGuard under a shared schedule and quota. */
+/**
+ * Supported short-video / social apps guarded by FocusGuard under a shared schedule and quota.
+ */
 enum class TargetApp(
-        val displayName: String,
-        val packages: Set<String>,
+    val displayName: String,
+    val packages: Set<String>,
 ) {
     INSTAGRAM(
-            displayName = "Instagram",
-            packages = setOf("com.instagram.android"),
+        displayName = "Instagram",
+        packages = setOf("com.instagram.android"),
     ),
     TIKTOK(
-            displayName = "TikTok",
-            packages =
-                    setOf(
-                            "com.zhiliaoapp.musically",
-                            "com.ss.android.ugc.trill",
-                            "com.zhiliaoapp.musically.go",
-                    ),
+        displayName = "TikTok",
+        packages = setOf(
+            "com.zhiliaoapp.musically",
+            "com.ss.android.ugc.trill",
+            "com.zhiliaoapp.musically.go",
+        ),
     ),
     X_TWITTER(
-            displayName = "X (Twitter)",
-            packages =
-                    setOf(
-                            "com.twitter.android",
-                            "com.twitter.android.lite",
-                    ),
+        displayName = "X (Twitter)",
+        packages = setOf(
+            "com.twitter.android",
+            "com.twitter.android.lite",
+        ),
     ),
     SNAPCHAT(
-            displayName = "Snapchat",
-            packages =
-                    setOf(
-                            "com.snapchat.android",
-                    ),
+        displayName = "Snapchat",
+        packages = setOf(
+            "com.snapchat.android",
+        ),
     ),
     THREADS(
-            displayName = "Threads",
-            packages =
-                    setOf(
-                            "com.instagram.barcelona",
-                    ),
+        displayName = "Threads",
+        packages = setOf(
+            "com.instagram.barcelona",
+        ),
     );
 
     companion object {
         fun fromPackage(pkg: String?): TargetApp? =
-                if (pkg == null) null else entries.firstOrNull { pkg in it.packages }
+            if (pkg == null) null else entries.firstOrNull { pkg in it.packages }
     }
 }
 
 /**
  * Result of evaluating the schedule at a given moment.
  *
- * @param isBlocking Instagram must be blocked right now.
- * @param unlockEligible The 15-min/hour temporary unlock may be offered.
+ * @param isBlocking       Instagram must be blocked right now.
+ * @param unlockEligible   The 15-min/hour temporary unlock may be offered.
  * @param hardBlockEnabled The user enabled "Hard Block".
- * @param coversWholeDay All Day mode, or custom periods that cover all 24h.
- * @param periodMinutes Length of the continuous active block (merged adjacent/overlapping periods).
- * @param endMinuteOfDay Minute of day when the current block ends (null if it never ends).
+ * @param coversWholeDay   All Day mode, or custom periods that cover all 24h.
+ * @param periodMinutes    Length of the continuous active block (merged adjacent/overlapping periods).
+ * @param endMinuteOfDay   Minute of day when the current block ends (null if it never ends).
  */
 data class BlockState(
-        val isBlocking: Boolean,
-        val unlockEligible: Boolean,
-        val hardBlockEnabled: Boolean,
-        val coversWholeDay: Boolean,
-        val periodMinutes: Int,
-        val endMinuteOfDay: Int?,
-        val isSessionCooldown: Boolean = false,
-        val cooldownUntilMillis: Long? = null,
+    val isBlocking: Boolean,
+    val unlockEligible: Boolean,
+    val hardBlockEnabled: Boolean,
+    val coversWholeDay: Boolean,
+    val periodMinutes: Int,
+    val endMinuteOfDay: Int?,
+    val isSessionCooldown: Boolean = false,
+    val cooldownUntilMillis: Long? = null,
 ) {
     companion object {
-        val NOT_BLOCKING =
-                BlockState(
-                        isBlocking = false,
-                        unlockEligible = false,
-                        hardBlockEnabled = false,
-                        coversWholeDay = false,
-                        periodMinutes = 0,
-                        endMinuteOfDay = null,
-                )
+        val NOT_BLOCKING = BlockState(
+            isBlocking = false,
+            unlockEligible = false,
+            hardBlockEnabled = false,
+            coversWholeDay = false,
+            periodMinutes = 0,
+            endMinuteOfDay = null,
+        )
     }
 }
 
 /**
- * Single source of truth for FocusGuard settings, schedule evaluation and the hourly unlock quota.
- * Backed by SharedPreferences + Gson.
+ * Single source of truth for FocusGuard settings, schedule evaluation and
+ * the hourly unlock quota. Backed by SharedPreferences + Gson.
  */
-class SettingsManager
-internal constructor(
-        private val prefs: SharedPreferences,
-        private val zoneProvider: () -> ZoneId = { ZoneId.systemDefault() },
+class SettingsManager internal constructor(
+    private val prefs: SharedPreferences,
+    private val zoneProvider: () -> ZoneId = { ZoneId.systemDefault() },
 ) {
 
-    private constructor(
-            context: Context
-    ) : this(
-            prefs =
-                    context.applicationContext.getSharedPreferences(
-                            PREFS_NAME,
-                            Context.MODE_PRIVATE
-                    ),
+    private constructor(context: Context) : this(
+        prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE),
     )
 
     private val gson = Gson()
@@ -181,56 +157,48 @@ internal constructor(
 
     var isEnabled: Boolean
         get() = prefs.getBoolean(KEY_ENABLED, false)
-        set(value) =
-                prefs.edit {
-                    putBoolean(KEY_ENABLED, value)
-                    if (!value) {
-                        putLong(KEY_UNLOCK_UNTIL, 0L)
-                        putLong(KEY_SESSION_USED_MS, 0L)
-                        putLong(KEY_SESSION_LAST_ACTIVITY_MS, 0L)
-                        putLong(KEY_SESSION_COOLDOWN_UNTIL, 0L)
-                        putBoolean(KEY_SESSION_WARNED, false)
-                    }
-                }
+        set(value) = prefs.edit {
+            putBoolean(KEY_ENABLED, value)
+            if (!value) {
+                putLong(KEY_UNLOCK_UNTIL, 0L)
+                putLong(KEY_SESSION_USED_MS, 0L)
+                putLong(KEY_SESSION_LAST_ACTIVITY_MS, 0L)
+                putLong(KEY_SESSION_COOLDOWN_UNTIL, 0L)
+                putBoolean(KEY_SESSION_WARNED, false)
+            }
+        }
 
     var scheduleMode: ScheduleMode
-        get() =
-                prefs.getString(KEY_MODE, null)?.let { name ->
-                    ScheduleMode.entries.firstOrNull { it.name == name }
-                }
-                        ?: ScheduleMode.ALL_DAY
+        get() = prefs.getString(KEY_MODE, null)
+            ?.let { name -> ScheduleMode.entries.firstOrNull { it.name == name } }
+            ?: ScheduleMode.ALL_DAY
         set(value) = prefs.edit { putString(KEY_MODE, value.name) }
 
     var sessionLimitMinutes: Int
-        get() =
-                prefs.getInt(KEY_SESSION_LIMIT_MINUTES, DEFAULT_SESSION_LIMIT_MINUTES).takeIf {
-                    it in SESSION_LIMIT_OPTIONS
-                }
-                        ?: DEFAULT_SESSION_LIMIT_MINUTES
+        get() = prefs.getInt(KEY_SESSION_LIMIT_MINUTES, DEFAULT_SESSION_LIMIT_MINUTES)
+            .takeIf { it in SESSION_LIMIT_OPTIONS }
+            ?: DEFAULT_SESSION_LIMIT_MINUTES
         set(value) {
-            val sanitized =
-                    value.takeIf { it in SESSION_LIMIT_OPTIONS } ?: DEFAULT_SESSION_LIMIT_MINUTES
+            val sanitized = value.takeIf { it in SESSION_LIMIT_OPTIONS } ?: DEFAULT_SESSION_LIMIT_MINUTES
             prefs.edit { putInt(KEY_SESSION_LIMIT_MINUTES, sanitized) }
         }
 
     var isHardBlock: Boolean
         get() = prefs.getBoolean(KEY_HARD_BLOCK, false)
-        set(value) =
-                prefs.edit {
-                    putBoolean(KEY_HARD_BLOCK, value)
-                    // Turning Hard Block on immediately ends any running temporary unlock.
-                    if (value) putLong(KEY_UNLOCK_UNTIL, 0L)
-                }
+        set(value) = prefs.edit {
+            putBoolean(KEY_HARD_BLOCK, value)
+            // Turning Hard Block on immediately ends any running temporary unlock.
+            if (value) putLong(KEY_UNLOCK_UNTIL, 0L)
+        }
 
     var appLanguage: AppLanguage
-        get() =
-                prefs.getString(KEY_LANGUAGE, null)?.let { name ->
-                    AppLanguage.entries.firstOrNull { it.name == name }
-                }
-                        ?: AppLanguage.SYSTEM
+        get() = prefs.getString(KEY_LANGUAGE, null)
+            ?.let { name -> AppLanguage.entries.firstOrNull { it.name == name } }
+            ?: AppLanguage.SYSTEM
         set(value) = prefs.edit { putString(KEY_LANGUAGE, value.name) }
 
-    fun isAppSelected(app: TargetApp): Boolean = prefs.getBoolean(appSelectionKey(app), true)
+    fun isAppSelected(app: TargetApp): Boolean =
+        prefs.getBoolean(appSelectionKey(app), true)
 
     fun getSelectedApps(): Set<TargetApp> {
         val selected = TargetApp.entries.filter { isAppSelected(it) }.toSet()
@@ -238,11 +206,10 @@ internal constructor(
     }
 
     /**
-     * Enables or disables blocking for [app]. At least one app must remain selected (either both
-     * apps or one of them).
+     * Enables or disables blocking for [app].
+     * At least one app must remain selected (either both apps or one of them).
      *
-     * @return true if the selection was updated, false if blocked because [app] is the last active
-     * app.
+     * @return true if the selection was updated, false if blocked because [app] is the last active app.
      */
     fun setAppSelected(app: TargetApp, selected: Boolean): Boolean {
         if (!selected) {
@@ -261,15 +228,14 @@ internal constructor(
 
     fun getIntervals(): List<TimeInterval> {
         val json = prefs.getString(KEY_INTERVALS, null) ?: return emptyList()
-        val parsed: List<TimeInterval> =
-                try {
-                    gson.fromJson<List<TimeInterval>>(json, intervalListType) ?: emptyList()
-                } catch (e: RuntimeException) {
-                    emptyList()
-                }
+        val parsed: List<TimeInterval> = try {
+            gson.fromJson<List<TimeInterval>>(json, intervalListType) ?: emptyList()
+        } catch (e: RuntimeException) {
+            emptyList()
+        }
         return parsed
-                .filter { it.isValid() }
-                .sortedWith(compareBy<TimeInterval> { it.startMinute }.thenBy { it.endMinute })
+            .filter { it.isValid() }
+            .sortedWith(compareBy<TimeInterval> { it.startMinute }.thenBy { it.endMinute })
     }
 
     fun addInterval(startMinute: Int, endMinute: Int): AddIntervalResult {
@@ -285,17 +251,12 @@ internal constructor(
     fun updateInterval(id: String, startMinute: Int, endMinute: Int): AddIntervalResult {
         if (startMinute == endMinute) return AddIntervalResult.INVALID_SAME_TIME
         val current = getIntervals()
-        if (current.any {
-                    it.id != id && it.startMinute == startMinute && it.endMinute == endMinute
-                }
-        ) {
+        if (current.any { it.id != id && it.startMinute == startMinute && it.endMinute == endMinute }) {
             return AddIntervalResult.DUPLICATE
         }
-        val updated =
-                current.map {
-                    if (it.id == id) it.copy(startMinute = startMinute, endMinute = endMinute)
-                    else it
-                }
+        val updated = current.map {
+            if (it.id == id) it.copy(startMinute = startMinute, endMinute = endMinute) else it
+        }
         saveIntervals(updated)
         return AddIntervalResult.ADDED
     }
@@ -309,17 +270,17 @@ internal constructor(
     }
 
     private fun TimeInterval.isValid(): Boolean =
-            startMinute in 0 until MINUTES_PER_DAY &&
-                    endMinute in 0 until MINUTES_PER_DAY &&
-                    startMinute != endMinute
+        startMinute in 0 until MINUTES_PER_DAY &&
+            endMinute in 0 until MINUTES_PER_DAY &&
+            startMinute != endMinute
 
     // endregion
 
     // region Schedule evaluation
 
     fun evaluate(
-            now: LocalDateTime = LocalDateTime.now(),
-            nowMillis: Long = System.currentTimeMillis(),
+        now: LocalDateTime = LocalDateTime.now(),
+        nowMillis: Long = System.currentTimeMillis(),
     ): BlockState {
         if (!isEnabled) return BlockState.NOT_BLOCKING
         val hardBlock = isHardBlock
@@ -329,14 +290,14 @@ internal constructor(
             if (cooldownUntil != null) {
                 val endLocal = cooldownUntil.toLocalDateTime(zoneProvider())
                 return BlockState(
-                        isBlocking = true,
-                        unlockEligible = false,
-                        hardBlockEnabled = true,
-                        coversWholeDay = false,
-                        periodMinutes = SESSION_COOLDOWN_MINUTES,
-                        endMinuteOfDay = endLocal.hour * 60 + endLocal.minute,
-                        isSessionCooldown = true,
-                        cooldownUntilMillis = cooldownUntil,
+                    isBlocking = true,
+                    unlockEligible = false,
+                    hardBlockEnabled = true,
+                    coversWholeDay = false,
+                    periodMinutes = SESSION_COOLDOWN_MINUTES,
+                    endMinuteOfDay = endLocal.hour * 60 + endLocal.minute,
+                    isSessionCooldown = true,
+                    cooldownUntilMillis = cooldownUntil,
                 )
             }
             return BlockState.NOT_BLOCKING
@@ -376,24 +337,23 @@ internal constructor(
         val length = (end - start + MINUTES_PER_DAY) % MINUTES_PER_DAY
 
         return BlockState(
-                isBlocking = true,
-                unlockEligible = !hardBlock && length > MIN_PERIOD_FOR_UNLOCK_MINUTES,
-                hardBlockEnabled = hardBlock,
-                coversWholeDay = false,
-                periodMinutes = length,
-                endMinuteOfDay = end,
+            isBlocking = true,
+            unlockEligible = !hardBlock && length > MIN_PERIOD_FOR_UNLOCK_MINUTES,
+            hardBlockEnabled = hardBlock,
+            coversWholeDay = false,
+            periodMinutes = length,
+            endMinuteOfDay = end,
         )
     }
 
-    private fun wholeDayState(hardBlock: Boolean) =
-            BlockState(
-                    isBlocking = true,
-                    unlockEligible = !hardBlock,
-                    hardBlockEnabled = hardBlock,
-                    coversWholeDay = true,
-                    periodMinutes = MINUTES_PER_DAY,
-                    endMinuteOfDay = null,
-            )
+    private fun wholeDayState(hardBlock: Boolean) = BlockState(
+        isBlocking = true,
+        unlockEligible = !hardBlock,
+        hardBlockEnabled = hardBlock,
+        coversWholeDay = true,
+        periodMinutes = MINUTES_PER_DAY,
+        endMinuteOfDay = null,
+    )
 
     // endregion
 
@@ -403,28 +363,27 @@ internal constructor(
         get() = prefs.getLong(KEY_UNLOCK_UNTIL, 0L)
 
     fun isUnlockActive(nowMillis: Long = System.currentTimeMillis()): Boolean =
-            unlockUntilMillis > nowMillis
+        unlockUntilMillis > nowMillis
 
     fun clearUnlock() {
         prefs.edit { putLong(KEY_UNLOCK_UNTIL, 0L) }
     }
 
     fun usedMillisInCurrentHour(nowMillis: Long = System.currentTimeMillis()): Long =
-            loadUsage()[hourStartMillis(nowMillis).toString()] ?: 0L
+        loadUsage()[hourStartMillis(nowMillis).toString()] ?: 0L
 
     fun remainingQuotaMinutes(nowMillis: Long = System.currentTimeMillis()): Int {
-        val remainingMs =
-                (QUOTA_MILLIS_PER_HOUR - usedMillisInCurrentHour(nowMillis)).coerceAtLeast(0L)
+        val remainingMs = (QUOTA_MILLIS_PER_HOUR - usedMillisInCurrentHour(nowMillis)).coerceAtLeast(0L)
         return (remainingMs / MILLIS_PER_MINUTE).toInt()
     }
 
     fun nextHourStartMillis(nowMillis: Long = System.currentTimeMillis()): Long =
-            hourStart(nowMillis).plusHours(1).toInstant().toEpochMilli()
+        hourStart(nowMillis).plusHours(1).toInstant().toEpochMilli()
 
     /**
-     * Starts a temporary unlock. Usage is charged as wall-clock time and split across calendar
-     * hours, so an unlock started at 14:55 for 15 min charges 5 min to the 14:00 hour and 10 min to
-     * the 15:00 hour.
+     * Starts a temporary unlock. Usage is charged as wall-clock time and split across
+     * calendar hours, so an unlock started at 14:55 for 15 min charges 5 min to the
+     * 14:00 hour and 10 min to the 15:00 hour.
      *
      * @return true if the unlock was granted.
      */
@@ -434,10 +393,9 @@ internal constructor(
         val durationMs = minutes.coerceIn(1, remaining) * MILLIS_PER_MINUTE
 
         val currentHourStart = hourStartMillis(nowMillis)
-        val usage =
-                loadUsage()
-                        .filterKeys { (it.toLongOrNull() ?: 0L) >= currentHourStart }
-                        .toMutableMap()
+        val usage = loadUsage()
+            .filterKeys { (it.toLongOrNull() ?: 0L) >= currentHourStart }
+            .toMutableMap()
 
         var cursor = nowMillis
         var left = durationMs
@@ -467,7 +425,7 @@ internal constructor(
     }
 
     private fun hourStart(millis: Long): ZonedDateTime =
-            Instant.ofEpochMilli(millis).atZone(zoneProvider()).truncatedTo(ChronoUnit.HOURS)
+        Instant.ofEpochMilli(millis).atZone(zoneProvider()).truncatedTo(ChronoUnit.HOURS)
 
     private fun hourStartMillis(millis: Long): Long = hourStart(millis).toInstant().toEpochMilli()
 
@@ -482,17 +440,16 @@ internal constructor(
         val cooldownUntil = sessionCooldownUntilMillis
         if (cooldownUntil <= nowMillis) return null
         val lastActivity = prefs.getLong(KEY_SESSION_LAST_ACTIVITY_MS, 0L)
-        val effectiveUntil =
-                if (lastActivity > 0L && cooldownUntil - lastActivity >= SESSION_COOLDOWN_MILLIS) {
-                    minOf(cooldownUntil, nextHourStartMillis(lastActivity))
-                } else {
-                    cooldownUntil
-                }
+        val effectiveUntil = if (lastActivity > 0L && cooldownUntil - lastActivity >= SESSION_COOLDOWN_MILLIS) {
+            minOf(cooldownUntil, nextHourStartMillis(lastActivity))
+        } else {
+            cooldownUntil
+        }
         return effectiveUntil.takeIf { it > nowMillis }
     }
 
     fun isSessionCooldownActive(nowMillis: Long = System.currentTimeMillis()): Boolean =
-            activeSessionCooldownUntil(nowMillis) != null
+        activeSessionCooldownUntil(nowMillis) != null
 
     fun getSessionStatus(nowMillis: Long = System.currentTimeMillis()): SessionStatus {
         val limitMin = sessionLimitMinutes
@@ -501,11 +458,11 @@ internal constructor(
 
         if (activeCooldownUntil != null) {
             return SessionStatus(
-                    limitMinutes = limitMin,
-                    usedMillis = limitMs,
-                    remainingMillis = 0L,
-                    cooldownUntilMillis = activeCooldownUntil,
-                    isCooldownActive = true,
+                limitMinutes = limitMin,
+                usedMillis = limitMs,
+                remainingMillis = 0L,
+                cooldownUntilMillis = activeCooldownUntil,
+                isCooldownActive = true,
             )
         }
 
@@ -513,34 +470,34 @@ internal constructor(
         val lastActivity = prefs.getLong(KEY_SESSION_LAST_ACTIVITY_MS, 0L)
         if (lastActivity < currentHourStart) {
             return SessionStatus(
-                    limitMinutes = limitMin,
-                    usedMillis = 0L,
-                    remainingMillis = limitMs,
-                    cooldownUntilMillis = 0L,
-                    isCooldownActive = false,
+                limitMinutes = limitMin,
+                usedMillis = 0L,
+                remainingMillis = limitMs,
+                cooldownUntilMillis = 0L,
+                isCooldownActive = false,
             )
         }
 
         val used = prefs.getLong(KEY_SESSION_USED_MS, 0L).coerceIn(0L, limitMs)
         val resetsAt = if (used > 0L) nextHourStartMillis(nowMillis) else null
         return SessionStatus(
-                limitMinutes = limitMin,
-                usedMillis = used,
-                remainingMillis = (limitMs - used).coerceAtLeast(0L),
-                cooldownUntilMillis = 0L,
-                isCooldownActive = false,
-                resetsAtMillis = resetsAt,
+            limitMinutes = limitMin,
+            usedMillis = used,
+            remainingMillis = (limitMs - used).coerceAtLeast(0L),
+            cooldownUntilMillis = 0L,
+            isCooldownActive = false,
+            resetsAtMillis = resetsAt,
         )
     }
 
     /**
-     * Records active foreground usage [deltaMs] in Session Limit mode. Usage and cooldowns reset at
-     * the start of every calendar clock hour (:00). Once the configured allowance is reached,
-     * guarded apps are hard-blocked until the next hour.
+     * Records active foreground usage [deltaMs] in Session Limit mode.
+     * Usage and cooldowns reset at the start of every calendar clock hour (:00).
+     * Once the configured allowance is reached, guarded apps are hard-blocked until the next hour.
      */
     fun recordSessionUsage(
-            deltaMs: Long,
-            nowMillis: Long = System.currentTimeMillis(),
+        deltaMs: Long,
+        nowMillis: Long = System.currentTimeMillis(),
     ): SessionTickResult {
         val limitMs = sessionLimitMinutes * MILLIS_PER_MINUTE
         if (isSessionCooldownActive(nowMillis)) return SessionTickResult.COOLDOWN_ACTIVE
@@ -549,17 +506,15 @@ internal constructor(
         val lastActivity = prefs.getLong(KEY_SESSION_LAST_ACTIVITY_MS, 0L)
         val shouldReset = lastActivity < currentHourStart
 
-        val currentUsed =
-                if (shouldReset) 0L else prefs.getLong(KEY_SESSION_USED_MS, 0L).coerceAtLeast(0L)
+        val currentUsed = if (shouldReset) 0L else prefs.getLong(KEY_SESSION_USED_MS, 0L).coerceAtLeast(0L)
         val alreadyWarned = if (shouldReset) false else prefs.getBoolean(KEY_SESSION_WARNED, false)
 
         val safeDelta = deltaMs.coerceIn(0L, MAX_SESSION_TICK_MS)
-        val effectiveDelta =
-                if (shouldReset) {
-                    minOf(safeDelta, (nowMillis - currentHourStart).coerceAtLeast(0L))
-                } else {
-                    safeDelta
-                }
+        val effectiveDelta = if (shouldReset) {
+            minOf(safeDelta, (nowMillis - currentHourStart).coerceAtLeast(0L))
+        } else {
+            safeDelta
+        }
         val newUsed = currentUsed + effectiveDelta
 
         if (newUsed >= limitMs) {
@@ -573,10 +528,9 @@ internal constructor(
         }
 
         val remaining = limitMs - newUsed
-        val shouldWarn =
-                !alreadyWarned &&
-                        limitMs > SESSION_WARNING_MILLIS &&
-                        remaining <= SESSION_WARNING_MILLIS
+        val shouldWarn = !alreadyWarned &&
+            limitMs > SESSION_WARNING_MILLIS &&
+            remaining <= SESSION_WARNING_MILLIS
 
         prefs.edit {
             putLong(KEY_SESSION_USED_MS, newUsed)
@@ -632,31 +586,30 @@ internal constructor(
         private const val KEY_SESSION_COOLDOWN_UNTIL = "session_cooldown_until"
         private const val KEY_SESSION_WARNED = "session_warned"
 
-        val SESSION_RUNTIME_KEYS =
-                setOf(
-                        KEY_SESSION_USED_MS,
-                        KEY_SESSION_LAST_ACTIVITY_MS,
-                        KEY_SESSION_COOLDOWN_UNTIL,
-                        KEY_SESSION_WARNED,
-                )
+        val SESSION_RUNTIME_KEYS = setOf(
+            KEY_SESSION_USED_MS,
+            KEY_SESSION_LAST_ACTIVITY_MS,
+            KEY_SESSION_COOLDOWN_UNTIL,
+            KEY_SESSION_WARNED,
+        )
 
-        @Volatile private var instance: SettingsManager? = null
+        @Volatile
+        private var instance: SettingsManager? = null
 
         fun getInstance(context: Context): SettingsManager =
-                instance
-                        ?: synchronized(this) {
-                            instance ?: SettingsManager(context).also { instance = it }
-                        }
+            instance ?: synchronized(this) {
+                instance ?: SettingsManager(context).also { instance = it }
+            }
     }
 }
 
 // region Formatting helpers
 
 fun Long.toLocalDateTime(zoneId: ZoneId = ZoneId.systemDefault()): LocalDateTime =
-        LocalDateTime.ofInstant(Instant.ofEpochMilli(this), zoneId)
+    LocalDateTime.ofInstant(Instant.ofEpochMilli(this), zoneId)
 
 private fun timeFormatter(is24Hour: Boolean): DateTimeFormatter =
-        DateTimeFormatter.ofPattern(if (is24Hour) "HH:mm" else "h:mm a", Locale.getDefault())
+    DateTimeFormatter.ofPattern(if (is24Hour) "HH:mm" else "h:mm a", Locale.getDefault())
 
 fun formatMinuteOfDay(minuteOfDay: Int, is24Hour: Boolean): String {
     val normalized = ((minuteOfDay % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY
@@ -664,9 +617,10 @@ fun formatMinuteOfDay(minuteOfDay: Int, is24Hour: Boolean): String {
 }
 
 fun formatClockTime(
-        epochMillis: Long,
-        is24Hour: Boolean,
-        zoneId: ZoneId = ZoneId.systemDefault(),
-): String = epochMillis.toLocalDateTime(zoneId).toLocalTime().format(timeFormatter(is24Hour))
+    epochMillis: Long,
+    is24Hour: Boolean,
+    zoneId: ZoneId = ZoneId.systemDefault(),
+): String =
+    epochMillis.toLocalDateTime(zoneId).toLocalTime().format(timeFormatter(is24Hour))
 
 // endregion
