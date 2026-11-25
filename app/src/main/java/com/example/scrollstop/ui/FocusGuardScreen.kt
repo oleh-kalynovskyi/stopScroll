@@ -54,6 +54,7 @@ import com.example.scrollstop.openAccessibilitySettings
 import com.example.scrollstop.openOverlaySettings
 import com.example.scrollstop.stringsFor
 import com.example.scrollstop.toLocalDateTime
+import com.example.scrollstop.ui.components.DeleteIntervalDialog
 import com.example.scrollstop.ui.components.EmptyIntervalsCard
 import com.example.scrollstop.ui.components.HourlyQuotaCard
 import com.example.scrollstop.ui.components.IntervalRow
@@ -65,9 +66,16 @@ import com.example.scrollstop.ui.components.ScheduleCard
 import com.example.scrollstop.ui.components.TimePickerDialog
 import kotlinx.coroutines.delay
 
-private enum class PickerStep { NONE, START, END }
+private enum class PickerStep {
+    NONE,
+    START,
+    END
+}
 
-private enum class IntervalError { SAME_TIME, DUPLICATE }
+private enum class IntervalError {
+    SAME_TIME,
+    DUPLICATE
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,9 +109,8 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
 
     // Keep the UI synced with changes made from LockScreenActivity or the service.
     DisposableEffect(settings) {
-        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
-            refreshFromSettings()
-        }
+        val listener =
+                SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> refreshFromSettings() }
         settings.registerListener(listener)
         onDispose { settings.unregisterListener(listener) }
     }
@@ -133,16 +140,19 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
     // Re-evaluate strings whenever the chosen language or the phone's system configuration changes.
     val strings = remember(language, configuration) { stringsFor(language) }
 
-    val blockState = remember(nowMillis, enabled, mode, hardBlock, intervals) {
-        settings.evaluate(nowMillis.toLocalDateTime())
-    }
+    val blockState =
+            remember(nowMillis, enabled, mode, hardBlock, intervals) {
+                settings.evaluate(nowMillis.toLocalDateTime())
+            }
     val unlockActive = blockState.unlockEligible && settings.isUnlockActive(nowMillis)
-    val remainingQuota = remember(nowMillis, enabled, mode, hardBlock) {
-        settings.remainingQuotaMinutes(nowMillis)
-    }
+    val remainingQuota =
+            remember(nowMillis, enabled, mode, hardBlock) {
+                settings.remainingQuotaMinutes(nowMillis)
+            }
 
     var pickerStep by rememberSaveable { mutableStateOf(PickerStep.NONE) }
     var editingIntervalId by rememberSaveable { mutableStateOf<String?>(null) }
+    var deletingIntervalId by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingStartMinute by rememberSaveable { mutableIntStateOf(9 * 60) }
     var pendingEndMinute by rememberSaveable { mutableIntStateOf(12 * 60) }
     var intervalError by rememberSaveable { mutableStateOf<IntervalError?>(null) }
@@ -150,148 +160,152 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
     CompositionLocalProvider(LocalAppStrings provides strings) {
         val s = currentStrings
         Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Column {
-                            Text("FocusGuard", fontWeight = FontWeight.SemiBold)
-                            Text(
-                                text = s.appSubtitle,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    },
-                    actions = {
-                        LanguageSelector(
-                            selectedLanguage = language,
-                            onLanguageSelect = { newLang ->
-                                settings.appLanguage = newLang
-                                language = newLang
-                                context.applyAppLanguage(newLang)
+                topBar = {
+                    TopAppBar(
+                            title = {
+                                Column {
+                                    Text("FocusGuard", fontWeight = FontWeight.SemiBold)
+                                    Text(
+                                            text = s.appSubtitle,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
                             },
-                        )
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                    ),
-                )
-            },
+                            actions = {
+                                LanguageSelector(
+                                        selectedLanguage = language,
+                                        onLanguageSelect = { newLang ->
+                                            settings.appLanguage = newLang
+                                            language = newLang
+                                            context.applyAppLanguage(newLang)
+                                        },
+                                )
+                            },
+                            colors =
+                                    TopAppBarDefaults.topAppBarColors(
+                                            containerColor = MaterialTheme.colorScheme.background,
+                                    ),
+                    )
+                },
         ) { innerPadding ->
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.TopCenter,
+                    modifier = Modifier.fillMaxSize().padding(innerPadding),
+                    contentAlignment = Alignment.TopCenter,
             ) {
                 LazyColumn(
-                    modifier = Modifier
-                        .widthIn(max = 600.dp)
-                        .fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                        modifier = Modifier.widthIn(max = 600.dp).fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     item(key = "permissions") {
                         PermissionsCard(
-                            overlayGranted = overlayGranted,
-                            accessibilityGranted = accessibilityGranted,
-                            onOpenOverlaySettings = { context.openOverlaySettings() },
-                            onOpenAccessibilitySettings = { context.openAccessibilitySettings() },
+                                overlayGranted = overlayGranted,
+                                accessibilityGranted = accessibilityGranted,
+                                onOpenOverlaySettings = { context.openOverlaySettings() },
+                                onOpenAccessibilitySettings = {
+                                    context.openAccessibilitySettings()
+                                },
                         )
                     }
 
                     item(key = "master") {
                         MasterToggleCard(
-                            enabled = enabled,
-                            selectedApps = selectedApps,
-                            showMinOneAppHint = showMinOneAppHint,
-                            accessibilityGranted = accessibilityGranted,
-                            blockState = blockState,
-                            unlockActive = unlockActive,
-                            unlockUntilMillis = settings.unlockUntilMillis,
-                            nowMillis = nowMillis,
-                            is24Hour = is24Hour,
-                            onToggle = {
-                                settings.isEnabled = it
-                                refreshFromSettings()
-                            },
-                            onAppToggle = { app, selected ->
-                                val updated = settings.setAppSelected(app, selected)
-                                showMinOneAppHint = !updated
-                                refreshFromSettings()
-                            },
-                            onEndUnlock = {
-                                settings.clearUnlock()
-                                refreshFromSettings()
-                            },
+                                enabled = enabled,
+                                selectedApps = selectedApps,
+                                showMinOneAppHint = showMinOneAppHint,
+                                accessibilityGranted = accessibilityGranted,
+                                blockState = blockState,
+                                unlockActive = unlockActive,
+                                unlockUntilMillis = settings.unlockUntilMillis,
+                                nowMillis = nowMillis,
+                                is24Hour = is24Hour,
+                                onToggle = {
+                                    settings.isEnabled = it
+                                    refreshFromSettings()
+                                },
+                                onAppToggle = { app, selected ->
+                                    val updated = settings.setAppSelected(app, selected)
+                                    showMinOneAppHint = !updated
+                                    refreshFromSettings()
+                                },
+                                onEndUnlock = {
+                                    settings.clearUnlock()
+                                    refreshFromSettings()
+                                },
                         )
                     }
 
                     item(key = "schedule") {
                         ScheduleCard(
-                            mode = mode,
-                            hardBlock = hardBlock,
-                            intervalsCount = intervals.size,
-                            onModeChange = {
-                                settings.scheduleMode = it
-                                refreshFromSettings()
-                            },
-                            onHardBlockChange = {
-                                settings.isHardBlock = it
-                                refreshFromSettings()
-                            },
+                                mode = mode,
+                                hardBlock = hardBlock,
+                                intervalsCount = intervals.size,
+                                onModeChange = {
+                                    settings.scheduleMode = it
+                                    refreshFromSettings()
+                                },
+                                onHardBlockChange = {
+                                    settings.isHardBlock = it
+                                    refreshFromSettings()
+                                },
                         )
                     }
 
                     if (mode == ScheduleMode.CUSTOM) {
-                        val errorText = when (intervalError) {
-                            IntervalError.SAME_TIME -> s.errSameStartEnd
-                            IntervalError.DUPLICATE -> s.errDuplicateInterval
-                            null -> null
-                        }
+                        val errorText =
+                                when (intervalError) {
+                                    IntervalError.SAME_TIME -> s.errSameStartEnd
+                                    IntervalError.DUPLICATE -> s.errDuplicateInterval
+                                    null -> null
+                                }
                         item(key = "intervals-header") {
                             IntervalsHeader(
-                                count = intervals.size,
-                                message = errorText,
-                                onAddClick = {
-                                    intervalError = null
-                                    editingIntervalId = null
-                                    pendingStartMinute = 9 * 60
-                                    pickerStep = PickerStep.START
-                                },
-                            )
-                        }
-
-                        if (intervals.isEmpty()) {
-                            item(key = "intervals-empty") {
-                                EmptyIntervalsCard(
+                                    count = intervals.size,
+                                    message = errorText,
                                     onAddClick = {
                                         intervalError = null
                                         editingIntervalId = null
                                         pendingStartMinute = 9 * 60
                                         pickerStep = PickerStep.START
                                     },
+                            )
+                        }
+
+                        if (intervals.isEmpty()) {
+                            item(key = "intervals-empty") {
+                                EmptyIntervalsCard(
+                                        onAddClick = {
+                                            intervalError = null
+                                            editingIntervalId = null
+                                            pendingStartMinute = 9 * 60
+                                            pickerStep = PickerStep.START
+                                        },
                                 )
                             }
                         } else {
                             items(intervals, key = { it.id }) { interval ->
                                 IntervalRow(
-                                    interval = interval,
-                                    hardBlock = hardBlock,
-                                    isActiveNow = enabled &&
-                                        interval.contains(nowMillis.toLocalDateTime().let { it.hour * 60 + it.minute }),
-                                    is24Hour = is24Hour,
-                                    onEdit = {
-                                        intervalError = null
-                                        editingIntervalId = interval.id
-                                        pendingStartMinute = interval.startMinute
-                                        pendingEndMinute = interval.endMinute
-                                        pickerStep = PickerStep.START
-                                    },
-                                    onDelete = {
-                                        settings.removeInterval(interval.id)
-                                        refreshFromSettings()
-                                    },
+                                        interval = interval,
+                                        hardBlock = hardBlock,
+                                        isActiveNow =
+                                                enabled &&
+                                                        interval.contains(
+                                                                nowMillis.toLocalDateTime().let {
+                                                                    it.hour * 60 + it.minute
+                                                                }
+                                                        ),
+                                        is24Hour = is24Hour,
+                                        onEdit = {
+                                            intervalError = null
+                                            editingIntervalId = interval.id
+                                            pendingStartMinute = interval.startMinute
+                                            pendingEndMinute = interval.endMinute
+                                            pickerStep = PickerStep.START
+                                        },
+                                        onDelete = {
+                                            deletingIntervalId = interval.id
+                                        },
                                 )
                             }
                         }
@@ -299,11 +313,12 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
 
                     item(key = "quota") {
                         HourlyQuotaCard(
-                            remainingMinutes = remainingQuota,
-                            nextResetTime = formatClockTime(
-                                settings.nextHourStartMillis(nowMillis),
-                                is24Hour,
-                            ),
+                                remainingMinutes = remainingQuota,
+                                nextResetTime =
+                                        formatClockTime(
+                                                settings.nextHourStartMillis(nowMillis),
+                                                is24Hour,
+                                        ),
                         )
                     }
 
@@ -313,70 +328,92 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
         }
 
         when (pickerStep) {
-            PickerStep.START -> TimePickerDialog(
-                title = s.pickerStartTimeTitle,
-                confirmLabel = s.pickerNextButton,
-                initialHour = pendingStartMinute / 60,
-                initialMinute = pendingStartMinute % 60,
-                is24Hour = is24Hour,
-                onDismiss = {
-                    pickerStep = PickerStep.NONE
-                    editingIntervalId = null
-                },
-                onConfirm = { hour, minute ->
-                    val newStart = hour * 60 + minute
-                    if (editingIntervalId == null) {
-                        pendingEndMinute = (newStart + 180) % MINUTES_PER_DAY
-                    }
-                    pendingStartMinute = newStart
-                    pickerStep = PickerStep.END
-                },
-            )
-
+            PickerStep.START ->
+                    TimePickerDialog(
+                            title = s.pickerStartTimeTitle,
+                            confirmLabel = s.pickerNextButton,
+                            initialHour = pendingStartMinute / 60,
+                            initialMinute = pendingStartMinute % 60,
+                            is24Hour = is24Hour,
+                            onDismiss = {
+                                pickerStep = PickerStep.NONE
+                                editingIntervalId = null
+                            },
+                            onConfirm = { hour, minute ->
+                                val newStart = hour * 60 + minute
+                                if (editingIntervalId == null) {
+                                    pendingEndMinute = (newStart + 180) % MINUTES_PER_DAY
+                                }
+                                pendingStartMinute = newStart
+                                pickerStep = PickerStep.END
+                            },
+                    )
             PickerStep.END -> {
                 TimePickerDialog(
-                    title = s.pickerEndTimeTitle(formatMinuteOfDay(pendingStartMinute, is24Hour)),
-                    confirmLabel = if (editingIntervalId != null) s.pickerSaveButton else s.pickerAddButton,
-                    initialHour = pendingEndMinute / 60,
-                    initialMinute = pendingEndMinute % 60,
-                    is24Hour = is24Hour,
-                    onDismiss = {
-                        pickerStep = PickerStep.NONE
-                        editingIntervalId = null
-                    },
-                    onConfirm = { hour, minute ->
-                        val endMinute = hour * 60 + minute
-                        val editId = editingIntervalId
-                        val result = if (editId != null) {
-                            settings.updateInterval(editId, pendingStartMinute, endMinute)
-                        } else {
-                            settings.addInterval(pendingStartMinute, endMinute)
-                        }
-                        when (result) {
-                            AddIntervalResult.ADDED -> {
-                                intervalError = null
-                                pickerStep = PickerStep.NONE
-                                editingIntervalId = null
-                                refreshFromSettings()
+                        title =
+                                s.pickerEndTimeTitle(
+                                        formatMinuteOfDay(pendingStartMinute, is24Hour)
+                                ),
+                        confirmLabel =
+                                if (editingIntervalId != null) s.pickerSaveButton
+                                else s.pickerAddButton,
+                        initialHour = pendingEndMinute / 60,
+                        initialMinute = pendingEndMinute % 60,
+                        is24Hour = is24Hour,
+                        onDismiss = {
+                            pickerStep = PickerStep.NONE
+                            editingIntervalId = null
+                        },
+                        onConfirm = { hour, minute ->
+                            val endMinute = hour * 60 + minute
+                            val editId = editingIntervalId
+                            val result =
+                                    if (editId != null) {
+                                        settings.updateInterval(
+                                                editId,
+                                                pendingStartMinute,
+                                                endMinute
+                                        )
+                                    } else {
+                                        settings.addInterval(pendingStartMinute, endMinute)
+                                    }
+                            when (result) {
+                                AddIntervalResult.ADDED -> {
+                                    intervalError = null
+                                    pickerStep = PickerStep.NONE
+                                    editingIntervalId = null
+                                    refreshFromSettings()
+                                }
+                                AddIntervalResult.INVALID_SAME_TIME -> {
+                                    intervalError = IntervalError.SAME_TIME
+                                    pickerStep = PickerStep.NONE
+                                    editingIntervalId = null
+                                }
+                                AddIntervalResult.DUPLICATE -> {
+                                    intervalError = IntervalError.DUPLICATE
+                                    pickerStep = PickerStep.NONE
+                                    editingIntervalId = null
+                                }
                             }
-
-                            AddIntervalResult.INVALID_SAME_TIME -> {
-                                intervalError = IntervalError.SAME_TIME
-                                pickerStep = PickerStep.NONE
-                                editingIntervalId = null
-                            }
-
-                            AddIntervalResult.DUPLICATE -> {
-                                intervalError = IntervalError.DUPLICATE
-                                pickerStep = PickerStep.NONE
-                                editingIntervalId = null
-                            }
-                        }
-                    },
+                        },
                 )
             }
-
             PickerStep.NONE -> Unit
+        }
+
+        val deletingInterval =
+                deletingIntervalId?.let { id -> intervals.firstOrNull { it.id == id } }
+        if (deletingInterval != null) {
+            DeleteIntervalDialog(
+                    interval = deletingInterval,
+                    is24Hour = is24Hour,
+                    onDismiss = { deletingIntervalId = null },
+                    onConfirm = {
+                        settings.removeInterval(deletingInterval.id)
+                        deletingIntervalId = null
+                        refreshFromSettings()
+                    },
+            )
         }
     }
 }

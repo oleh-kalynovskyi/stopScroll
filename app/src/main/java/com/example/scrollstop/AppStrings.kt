@@ -132,6 +132,9 @@ data class AppStrings(
     val intervalShortHardBlockTag: String,
     val overnightTag: String,
     val deletePeriodContentDesc: String,
+    val deletePeriodDialogTitle: String,
+    val deletePeriodDialogMessage: (range: String) -> String,
+    val deletePeriodConfirmButton: String,
     // Quota card
     val quotaTitle: String,
     val quotaLeftLabel: (remaining: Int, total: Int) -> String,

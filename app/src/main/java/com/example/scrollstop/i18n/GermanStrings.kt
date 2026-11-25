@@ -74,6 +74,11 @@ val GermanStrings =
         intervalShortHardBlockTag = "<= 2 Std. · Strikte Sperre (keine Entsperrung)",
         overnightTag = " · über Nacht",
         deletePeriodContentDesc = "Zeitraum löschen",
+        deletePeriodDialogTitle = "Zeitraum löschen?",
+        deletePeriodDialogMessage = { range ->
+            "Möchtest du den Zeitraum $range wirklich löschen?"
+        },
+        deletePeriodConfirmButton = "Löschen",
         quotaTitle = "Entsperrkontingent dieser Stunde",
         quotaLeftLabel = { remaining, total -> "$remaining / $total Min. übrig" },
         quotaUsedSubtitle = { used, resetTime ->

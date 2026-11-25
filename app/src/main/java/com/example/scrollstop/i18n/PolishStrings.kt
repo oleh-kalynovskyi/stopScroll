@@ -75,6 +75,11 @@ val PolishStrings =
         intervalShortHardBlockTag = "<= 2 godz. · Ścisła blokada (bez odblokowania)",
         overnightTag = " · nocny",
         deletePeriodContentDesc = "Usuń przedział czasowy",
+        deletePeriodDialogTitle = "Usunąć przedział czasowy?",
+        deletePeriodDialogMessage = { range ->
+            "Czy na pewno chcesz usunąć przedział czasowy $range?"
+        },
+        deletePeriodConfirmButton = "Usuń",
         quotaTitle = "Limit odblokowania w tej godzinie",
         quotaLeftLabel = { remaining, total -> "Pozostało $remaining / $total min" },
         quotaUsedSubtitle = { used, resetTime ->

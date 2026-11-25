@@ -81,6 +81,11 @@ val FrenchStrings =
                 intervalShortHardBlockTag = "<= 2 h · Blocage strict (sans déverrouillage)",
                 overnightTag = " · nuit",
                 deletePeriodContentDesc = "Supprimer la plage horaire",
+                deletePeriodDialogTitle = "Supprimer la plage horaire ?",
+                deletePeriodDialogMessage = { range ->
+                    "Voulez-vous vraiment supprimer la plage horaire $range ?"
+                },
+                deletePeriodConfirmButton = "Supprimer",
                 quotaTitle = "Quota de déverrouillage pour cette heure",
                 quotaLeftLabel = { remaining, total -> "$remaining / $total min restantes" },
                 quotaUsedSubtitle = { used, resetTime ->

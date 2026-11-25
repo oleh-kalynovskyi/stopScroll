@@ -75,6 +75,11 @@ val UkrainianStrings =
         intervalShortHardBlockTag = "<= 2 год · Жорстке блокування",
         overnightTag = " · через північ",
         deletePeriodContentDesc = "Видалити часовий період",
+        deletePeriodDialogTitle = "Видалити часовий період?",
+        deletePeriodDialogMessage = { range ->
+            "Ви впевнені, що хочете видалити часовий період $range?"
+        },
+        deletePeriodConfirmButton = "Видалити",
         quotaTitle = "Ліміт розблокування на цю годину",
         quotaLeftLabel = { remaining, total -> "Залишилось $remaining із $total хв" },
         quotaUsedSubtitle = { used, resetTime ->

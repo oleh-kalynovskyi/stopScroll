@@ -50,6 +50,9 @@ class ExampleUnitTest {
             assertFalse(s.appSubtitle.isBlank())
             assertTrue(s.statusUnlockActive(12, 5).contains("12:05"))
             assertTrue(s.lockTitle("Instagram").contains("Instagram"))
+            assertFalse(s.deletePeriodDialogTitle.isBlank())
+            assertFalse(s.deletePeriodConfirmButton.isBlank())
+            assertTrue(s.deletePeriodDialogMessage("09:00 – 12:00").contains("09:00 – 12:00"))
             assertFalse(s.formatDuration(135).isBlank())
         }
     }

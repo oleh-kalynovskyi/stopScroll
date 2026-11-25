@@ -73,6 +73,11 @@ val EnglishStrings =
         intervalShortHardBlockTag = "<= 2h · Hard Block (no unlock)",
         overnightTag = " · overnight",
         deletePeriodContentDesc = "Delete time period",
+        deletePeriodDialogTitle = "Delete time period?",
+        deletePeriodDialogMessage = { range ->
+            "Are you sure you want to delete the time period $range?"
+        },
+        deletePeriodConfirmButton = "Delete",
         quotaTitle = "This Hour's Unlock Quota",
         quotaLeftLabel = { remaining, total -> "$remaining / $total min left" },
         quotaUsedSubtitle = { used, resetTime ->

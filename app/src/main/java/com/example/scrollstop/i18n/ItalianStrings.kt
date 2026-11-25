@@ -75,6 +75,11 @@ val ItalianStrings =
         intervalShortHardBlockTag = "<= 2h · Blocco rigoroso (nessuno sblocco)",
         overnightTag = " · notturno",
         deletePeriodContentDesc = "Elimina fascia oraria",
+        deletePeriodDialogTitle = "Eliminare la fascia oraria?",
+        deletePeriodDialogMessage = { range ->
+            "Vuoi davvero eliminare la fascia oraria $range?"
+        },
+        deletePeriodConfirmButton = "Elimina",
         quotaTitle = "Quota di sblocco per quest'ora",
         quotaLeftLabel = { remaining, total -> "$remaining / $total min rimasti" },
         quotaUsedSubtitle = { used, resetTime ->

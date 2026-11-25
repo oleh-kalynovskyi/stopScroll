@@ -16,8 +16,10 @@ import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.LockClock
 import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -31,6 +33,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -320,4 +323,34 @@ internal fun StatusBadge(
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
         )
     }
+}
+
+@Composable
+internal fun DeleteIntervalDialog(
+        interval: TimeInterval,
+        is24Hour: Boolean,
+        onDismiss: () -> Unit,
+        onConfirm: () -> Unit,
+) {
+    val s = currentStrings
+    val rangeText =
+            "${formatMinuteOfDay(interval.startMinute, is24Hour)} – " +
+                    formatMinuteOfDay(interval.endMinute, is24Hour)
+
+    AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(s.deletePeriodDialogTitle) },
+            text = { Text(s.deletePeriodDialogMessage(rangeText)) },
+            confirmButton = {
+                Button(
+                        onClick = onConfirm,
+                        colors =
+                                ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.error,
+                                        contentColor = MaterialTheme.colorScheme.onError,
+                                ),
+                ) { Text(s.deletePeriodConfirmButton) }
+            },
+            dismissButton = { TextButton(onClick = onDismiss) { Text(s.pickerCancelButton) } },
+    )
 }

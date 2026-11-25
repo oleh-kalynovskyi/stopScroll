@@ -79,6 +79,11 @@ val SpanishStrings =
                 intervalShortHardBlockTag = "<= 2 h · Bloqueo estricto (sin desbloqueo)",
                 overnightTag = " · nocturno",
                 deletePeriodContentDesc = "Eliminar periodo de tiempo",
+                deletePeriodDialogTitle = "¿Eliminar periodo de tiempo?",
+                deletePeriodDialogMessage = { range ->
+                    "¿Seguro que quieres eliminar el periodo de tiempo $range?"
+                },
+                deletePeriodConfirmButton = "Eliminar",
                 quotaTitle = "Cuota de desbloqueo de esta hora",
                 quotaLeftLabel = { remaining, total -> "Quedan $remaining / $total min" },
                 quotaUsedSubtitle = { used, resetTime ->
