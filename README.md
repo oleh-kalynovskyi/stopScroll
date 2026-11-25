@@ -1,27 +1,38 @@
 # FocusGuard (ScrollStop)
 
-**FocusGuard** is a lightweight, privacy-first, open-source Android app built with **Kotlin** and **Jetpack Compose (Material 3)** that helps you break the habit of mindless Instagram scrolling using flexible blocking schedules, mindful friction, and a grayscale pass-through overlay during temporary unlocks.
+**FocusGuard** is a lightweight, privacy-first, open-source Android app built with **Kotlin** and **Jetpack Compose (Material 3)** that helps you break the habit of mindless scrolling across **Instagram, TikTok, X (Twitter), Snapchat, and Threads** using flexible blocking schedules, session-based usage allowances with automatic cooldowns, mindful friction, and a pass-through gray overlay during temporary unlocks.
 
 ---
 
 ## ✨ Features
 
-- **Flexible Blocking Schedules**
+- **Multi-App Protection (Shared Schedule & Pool)**
+  - Guard **Instagram**, **TikTok**, **X (Twitter)**, **Snapchat**, and **Threads** (pick any combination; at least one app remains selected).
+  - All selected apps share a single schedule, hourly unlock quota, or session allowance so you can't bypass a limit by switching to another feed.
+- **Three Flexible Modes**
   - **All Day (24/7):** Block selected apps around the clock.
   - **Custom Time Periods:** Add any number of custom focus intervals (including overnight ranges that cross midnight, such as `22:00 – 02:00`). Adjacent or overlapping intervals are automatically merged when evaluating active focus windows.
-  - **Session Limit Mode (Allowance + Cooldown):** Use selected apps freely in full color (no gray screen, no upfront lock screen) for a shared allowance of **5, 10, or 15 minutes** of active screen-on time. A non-intrusive top pill banner warns 2 minutes before the limit; once reached, apps are hard-blocked for **1 hour**. Staying away from guarded apps for 1 hour automatically resets any partial session usage.
-- **Automatic 2-Hour Rule & Hourly Quota**
+  - **Session Limit Mode (Allowance + 1-Hour Cooldown):** A "use first, cool down after" approach for intentional short visits:
+    - **Full-Color Free Access:** Open guarded apps immediately with **no upfront lock screen** and **no gray screen overlay**.
+    - **Configurable Session Presets:** Choose **5, 10, or 15 minutes** of shared active usage via quick preset chips.
+    - **Active Screen-On Tracking:** Time only ticks while a guarded app is in the foreground and the screen is on — leaving the app or locking your phone pauses the timer automatically.
+    - **2-Minute Warning Banner:** When 2 minutes remain in your session, a non-intrusive, touch-pass-through pill banner appears at the top of the screen for ~5 seconds (no notification permission required).
+    - **1-Hour Hard Cooldown:** Once the limit is reached, selected apps are hard-blocked for **1 hour** with a lock screen showing the exact time access returns.
+    - **Hybrid Inactivity Auto-Reset:** Stepping away from all guarded apps for 1 hour automatically resets any partial session usage back to the full allowance.
+    - **Live Status & Progress:** The home screen displays a real-time countdown and progress bar for your remaining session time or active cooldown.
+- **Automatic 2-Hour Rule & Hourly Quota** *(All Day & Custom Modes)*
   - **Short Focus Periods (`<= 2 hours`):** Automatically enforced as a **Hard Block** — no temporary unlock button is shown on the lock screen.
   - **Long Focus Periods (`> 2 hours`) or All Day Mode:** Allows up to **15 minutes of temporary unlock per clock hour** (when Hard Block is unchecked).
-- **Hard Block Mode**
-  - Optional checkbox available in both **All Day** and **Custom Periods** modes that disables all temporary unlocks completely. The only way to lift a Hard Block early is to open FocusGuard and change your settings.
+- **Hard Block Mode** *(All Day & Custom Modes)*
+  - Optional checkbox that disables all temporary unlocks completely. The only way to lift a Hard Block early is to open FocusGuard and change your settings.
 - **10-Second Mindful Friction Pause**
-  - Before you can spend your hourly unlock quota, the lock screen displays a 10-second breathing countdown so impulsive opens can be abandoned with a single tap on **Exit to Home Screen**.
+  - Before spending your hourly unlock quota in All Day / Custom mode, the lock screen displays a 10-second breathing countdown so impulsive opens can be abandoned with a single tap on **Exit to Home Screen**.
 - **Desaturated / Gray Screen Pass-Through Overlay**
-  - While a temporary unlock is active and Instagram is in the foreground, FocusGuard renders a non-intrusive translucent dark-gray overlay (`TYPE_APPLICATION_OVERLAY`) over the screen so the feed looks dull and less stimulating, while letting all touches and gestures pass straight through.
-  - Leaving Instagram hides the overlay immediately; returning while unlock time remains re-applies it; when the timer expires, Instagram is locked again right away.
-- **Bilingual UI (English & Українська)**
-  - Automatically follows your phone's system language by default, with an instant language switcher (`Auto / EN / UA`) in the top app bar.
+  - While a temporary unlock is active and a guarded app is in the foreground, FocusGuard renders a non-intrusive translucent dark-gray overlay (`TYPE_ACCESSIBILITY_OVERLAY`) over the screen so the feed looks dull and less stimulating, while letting all touches, back presses, and gestures pass straight through.
+  - Leaving the guarded app hides the overlay immediately; returning while unlock time remains re-applies it; when the timer expires, the app is locked again right away.
+- **8-Language Localization**
+  - Supports **English, Українська, Deutsch, Español, Français, Português, Italiano, and Polski**.
+  - Follows your phone's system language by default, with an instant in-app language switcher in the top app bar.
 - **100% Offline & Private**
   - No internet permission, no analytics, no ads, and `canRetrieveWindowContent="false"` in the Accessibility Service configuration (screen content is never read).
 
@@ -33,7 +44,7 @@
 | :--- | :--- |
 | **Language** | 100% Kotlin |
 | **UI** | Jetpack Compose + Material 3 (Dark Theme) |
-| **System Integration** | `AccessibilityService` (`TYPE_WINDOW_STATE_CHANGED`), `WindowManager` (`TYPE_APPLICATION_OVERLAY`) |
+| **System Integration** | `AccessibilityService` (`TYPE_WINDOW_STATE_CHANGED`), `WindowManager` (`TYPE_ACCESSIBILITY_OVERLAY`) |
 | **Persistence** | `SharedPreferences` + `Gson` |
 | **SDK Levels** | `minSdk = 26` (Android 8.0) · `targetSdk = 35` (Android 15) |
 
@@ -45,16 +56,19 @@
 app/src/main/
 ├── AndroidManifest.xml
 ├── java/com/example/scrollstop/
-│   ├── AppBlockerService.kt     # AccessibilityService + pass-through gray WindowManager overlay
-│   ├── AppStrings.kt            # English & Ukrainian localization + locale helpers
-│   ├── LockScreenActivity.kt    # Full-screen Compose lock screen, 10s friction timer & quota slider
-│   ├── MainActivity.kt          # Permissions dashboard, master toggle, schedule & TimePicker UI
-│   ├── SettingsManager.kt       # SharedPreferences + Gson persistence, schedule & hourly quota engine
-│   └── ui/theme/
-│       └── Theme.kt             # Minimalist dark Material 3 color scheme
+│   ├── AppBlockerService.kt       # AccessibilityService, session tracker, gray overlay & 2-min warning pill
+│   ├── AppStrings.kt              # Localization contract, language enum & locale helpers
+│   ├── LockScreenActivity.kt      # Isolated full-screen Compose lock screen, 10s friction timer & quota slider
+│   ├── MainActivity.kt            # Entry point hosting FocusGuardScreen
+│   ├── PermissionUtils.kt         # Overlay & Accessibility permission checks and settings intents
+│   ├── SettingsManager.kt         # SharedPreferences + Gson persistence, schedule, quota & session limit engine
+│   ├── i18n/                      # 8-language string tables (EN, UK, DE, ES, FR, PT, IT, PL)
+│   └── ui/
+│       ├── FocusGuardScreen.kt    # Main dashboard screen
+│       ├── components/            # Stateless Compose cards (MasterToggle, Schedule, SessionLimit, TimePicker, etc.)
+│       └── theme/                 # Minimalist dark Material 3 color scheme & typography
 └── res/
-    ├── values/strings.xml       # Default (English) system strings
-    ├── values-uk/strings.xml    # Ukrainian system strings
+    ├── values*/strings.xml        # Localized system strings (8 languages)
     └── xml/
         ├── accessibility_service_config.xml
         └── locales_config.xml
@@ -82,6 +96,9 @@ app/src/main/
    # Build debug APK
    ./gradlew :app:assembleDebug
 
+   # Run unit tests
+   ./gradlew :app:testDebugUnitTest
+
    # Install directly onto a connected device
    ./gradlew :app:installDebug
    ```
@@ -94,9 +111,9 @@ app/src/main/
 FocusGuard requires two Android system permissions shown at the top of the home screen in the **Permissions Dashboard**:
 
 1. **Display Over Other Apps (`SYSTEM_ALERT_WINDOW`)**
-   - Used to render the pass-through gray tint overlay during temporary unlocks.
+   - Used alongside the Accessibility overlay to keep overlays and lock transitions reliable across Android versions.
 2. **Accessibility Service (`FocusGuard Blocker`)**
-   - Used strictly to detect when `com.instagram.android` enters the foreground.
+   - Used strictly to detect when a selected guarded app (Instagram, TikTok, X, Snapchat, or Threads) enters the foreground, track active session time, and display the pass-through gray overlay or 2-minute warning pill.
    - Configured with `android:canRetrieveWindowContent="false"` — **FocusGuard cannot read your messages, passwords, or screen text**.
 
 > **Note for Android 13+ (Sideloaded APKs):**
@@ -110,7 +127,7 @@ FocusGuard requires two Android system permissions shown at the top of the home 
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome! Some ideas for future enhancements:
-- Multi-app package selection (TikTok, YouTube Shorts, X/Twitter, etc.)
+- Additional guarded apps (e.g., YouTube Shorts, Reddit)
 - Daily & weekly block/unlock statistics
 - Optional strict-mode cooldown before disabling the Master Blocker
 
