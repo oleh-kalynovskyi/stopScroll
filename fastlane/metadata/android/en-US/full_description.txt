@@ -1,0 +1,19 @@
+FocusGuard (ScrollStop) is a lightweight, 100% offline, privacy-first app blocker that helps you break the habit of mindless scrolling across Instagram, TikTok, X (Twitter), Snapchat, and Threads.
+
+All selected apps share a single schedule, hourly unlock quota, or session allowance, so you cannot bypass a limit by switching to another feed.
+
+Features:
+- Multi-app protection: Guard any combination of Instagram, TikTok, X (Twitter), Snapchat, and Threads under one shared rule set.
+- Three flexible modes:
+  * All Day (24/7): Block selected apps around the clock.
+  * Custom Time Periods: Create any number of focus intervals, including overnight ranges (e.g. 22:00 - 02:00). Overlapping or adjacent intervals are merged automatically.
+  * Session Limit Mode: Use guarded apps in full color for 5, 10, or 15 minutes of active screen-on time, receive a subtle 2-minute warning pill, and enter a 1-hour hard cooldown when the allowance runs out. Stepping away for 1 hour automatically resets partial usage.
+- 2-hour rule & hourly unlock quota: In All Day and Custom modes, short focus blocks (<= 2 hours) are automatically hard-blocked. Longer blocks (> 2 hours) allow up to 15 minutes of temporary unlock per clock hour.
+- Hard Block option: Disable temporary unlocks completely when you need strict focus.
+- 10-second mindful friction pause: Before spending your hourly unlock quota, a 10-second countdown gives you a moment to reconsider and exit back to the home screen.
+- Pass-through gray overlay: During temporary unlocks, a subtle translucent dark-gray overlay makes feeds less stimulating while letting all touches and gestures pass through.
+- 8 languages: English, Ukrainian, German, Spanish, French, Portuguese, Italian, and Polish.
+
+Privacy & Offline Guarantee:
+- No internet permission, no ads, no analytics, and no telemetry.
+- Uses Android AccessibilityService strictly to detect when a guarded app enters the foreground and display overlays. Screen content is never read (canRetrieveWindowContent="false").

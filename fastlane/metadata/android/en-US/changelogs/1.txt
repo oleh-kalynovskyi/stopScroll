@@ -1,0 +1,6 @@
+Initial release of FocusGuard (ScrollStop):
+- Multi-app blocking for Instagram, TikTok, X (Twitter), Snapchat, and Threads
+- All Day, Custom Time Periods (including overnight), and Session Limit modes
+- 2-hour hard-block rule, 15-minute hourly unlock quota, and 10-second mindful friction pause
+- Pass-through gray overlay during temporary unlocks and 2-minute session warning pill
+- 100% offline and private with 8-language support
