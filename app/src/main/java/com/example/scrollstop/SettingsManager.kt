@@ -127,10 +127,15 @@ data class BlockState(
  * Single source of truth for FocusGuard settings, schedule evaluation and
  * the hourly unlock quota. Backed by SharedPreferences + Gson.
  */
-class SettingsManager private constructor(context: Context) {
+class SettingsManager internal constructor(
+    private val prefs: SharedPreferences,
+    private val zoneProvider: () -> ZoneId = { ZoneId.systemDefault() },
+) {
 
-    private val prefs: SharedPreferences =
-        context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private constructor(context: Context) : this(
+        prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE),
+    )
+
     private val gson = Gson()
     private val intervalListType = object : TypeToken<List<TimeInterval>>() {}.type
     private val usageMapType = object : TypeToken<Map<String, Long>>() {}.type
@@ -371,7 +376,7 @@ class SettingsManager private constructor(context: Context) {
     }
 
     private fun hourStart(millis: Long): ZonedDateTime =
-        Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).truncatedTo(ChronoUnit.HOURS)
+        Instant.ofEpochMilli(millis).atZone(zoneProvider()).truncatedTo(ChronoUnit.HOURS)
 
     private fun hourStartMillis(millis: Long): Long = hourStart(millis).toInstant().toEpochMilli()
 
@@ -420,8 +425,8 @@ class SettingsManager private constructor(context: Context) {
 
 // region Formatting helpers
 
-fun Long.toLocalDateTime(): LocalDateTime =
-    LocalDateTime.ofInstant(Instant.ofEpochMilli(this), ZoneId.systemDefault())
+fun Long.toLocalDateTime(zoneId: ZoneId = ZoneId.systemDefault()): LocalDateTime =
+    LocalDateTime.ofInstant(Instant.ofEpochMilli(this), zoneId)
 
 private fun timeFormatter(is24Hour: Boolean): DateTimeFormatter =
     DateTimeFormatter.ofPattern(if (is24Hour) "HH:mm" else "h:mm a", Locale.getDefault())
@@ -431,7 +436,11 @@ fun formatMinuteOfDay(minuteOfDay: Int, is24Hour: Boolean): String {
     return LocalTime.of(normalized / 60, normalized % 60).format(timeFormatter(is24Hour))
 }
 
-fun formatClockTime(epochMillis: Long, is24Hour: Boolean): String =
-    epochMillis.toLocalDateTime().toLocalTime().format(timeFormatter(is24Hour))
+fun formatClockTime(
+    epochMillis: Long,
+    is24Hour: Boolean,
+    zoneId: ZoneId = ZoneId.systemDefault(),
+): String =
+    epochMillis.toLocalDateTime(zoneId).toLocalTime().format(timeFormatter(is24Hour))
 
 // endregion
