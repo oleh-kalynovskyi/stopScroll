@@ -6,19 +6,19 @@ import com.example.scrollstop.AppStrings
 val UkrainianStrings =
     AppStrings(
         language = AppLanguage.UK,
-        appSubtitle = "Блокувальник Instagram, TikTok та X",
+        appSubtitle = "Блокувальник Instagram, TikTok, X, Snapchat та Threads",
         languageMenuTitle = "Мова застосунку",
         languageSystem = "Системна мова",
         permissionsTitle = "Панель дозволів",
         permissionsAllActive = "Усі необхідні системні дозволи надано.",
         permissionsGrantBoth =
-            "Надайте обидва дозволи, щоб FocusGuard міг виявляти та затемнювати Instagram, TikTok та X.",
+            "Надайте обидва дозволи, щоб FocusGuard міг виявляти та затемнювати Instagram, TikTok, X, Snapchat та Threads.",
         permOverlayTitle = "Відображення поверх інших вікон",
         permOverlaySubtitle =
             "Накладає прозорий сірий фільтр під час тимчасового розблокування",
         permAccessibilityTitle = "Служба спеціальних можливостей",
         permAccessibilitySubtitle =
-            "Виявляє, коли Instagram, TikTok або X відкривається на екрані",
+            "Виявляє, коли Instagram, TikTok, X, Snapchat або Threads відкривається на екрані",
         actionSettings = "Налаштування",
         actionGrant = "Надати",
         masterBlockerTitle = "Головний перемикач",

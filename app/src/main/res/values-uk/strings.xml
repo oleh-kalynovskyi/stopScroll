@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">FocusGuard</string>
     <string name="accessibility_service_label">Блокувальник FocusGuard</string>
-    <string name="accessibility_service_description">FocusGuard використовує цю службу лише для виявлення запуску Instagram, TikTok або X (Twitter), щоб показати екран блокування або сірий фільтр під час тимчасового розблокування згідно з вашими правилами. Вміст екрана не зчитується і не зберігається.</string>
+    <string name="accessibility_service_description">FocusGuard використовує цю службу лише для виявлення запуску Instagram, TikTok, X (Twitter), Snapchat або Threads, щоб показати екран блокування або сірий фільтр під час тимчасового розблокування згідно з вашими правилами. Вміст екрана не зчитується і не зберігається.</string>
 </resources>

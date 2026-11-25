@@ -6,19 +6,19 @@ import com.example.scrollstop.AppStrings
 val PolishStrings =
     AppStrings(
         language = AppLanguage.PL,
-        appSubtitle = "Blokada Instagram, TikTok i X",
+        appSubtitle = "Blokada Instagram, TikTok, X, Snapchat i Threads",
         languageMenuTitle = "Język aplikacji",
         languageSystem = "Język systemowy",
         permissionsTitle = "Panel uprawnień",
         permissionsAllActive = "Wszystkie wymagane uprawnienia systemowe są aktywne.",
         permissionsGrantBoth =
-            "Przyznaj oba uprawnienia, aby FocusGuard mógł wykrywać i przyciemniać aplikacje Instagram, TikTok oraz X.",
+            "Przyznaj oba uprawnienia, aby FocusGuard mógł wykrywać i przyciemniać aplikacje Instagram, TikTok, X, Snapchat oraz Threads.",
         permOverlayTitle = "Wyświetlanie nad innymi aplikacjami",
         permOverlaySubtitle =
             "Nakłada półprzezroczysty szary filtr podczas tymczasowego odblokowania",
         permAccessibilityTitle = "Usługa ułatwień dostępu",
         permAccessibilitySubtitle =
-            "Wykrywa uruchomienie aplikacji Instagram, TikTok lub X na pierwszym planie",
+            "Wykrywa uruchomienie aplikacji Instagram, TikTok, X, Snapchat lub Threads na pierwszym planie",
         actionSettings = "Ustawienia",
         actionGrant = "Przyznaj",
         masterBlockerTitle = "Główna blokada",

@@ -73,6 +73,18 @@ enum class TargetApp(
             "com.twitter.android",
             "com.twitter.android.lite",
         ),
+    ),
+    SNAPCHAT(
+        displayName = "Snapchat",
+        packages = setOf(
+            "com.snapchat.android",
+        ),
+    ),
+    THREADS(
+        displayName = "Threads",
+        packages = setOf(
+            "com.instagram.barcelona",
+        ),
     );
 
     companion object {

@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">FocusGuard</string>
     <string name="accessibility_service_label">Bloqueador FocusGuard</string>
-    <string name="accessibility_service_description">FocusGuard utiliza este servicio únicamente para detectar cuándo Instagram, TikTok o X (Twitter) pasa a primer plano, con el fin de mostrar la pantalla de bloqueo o el filtro gris de desbloqueo según tus reglas. No se lee ni se recopila ningún contenido de la pantalla.</string>
+    <string name="accessibility_service_description">FocusGuard utiliza este servicio únicamente para detectar cuándo Instagram, TikTok, X (Twitter), Snapchat o Threads pasa a primer plano, con el fin de mostrar la pantalla de bloqueo o el filtro gris de desbloqueo según tus reglas. No se lee ni se recopila ningún contenido de la pantalla.</string>
 </resources>

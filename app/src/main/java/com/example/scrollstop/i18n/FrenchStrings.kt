@@ -6,19 +6,19 @@ import com.example.scrollstop.AppStrings
 val FrenchStrings =
         AppStrings(
                 language = AppLanguage.FR,
-                appSubtitle = "Bloqueur Instagram, TikTok et X",
+                appSubtitle = "Bloqueur Instagram, TikTok, X, Snapchat et Threads",
                 languageMenuTitle = "Langue de l'application",
                 languageSystem = "Langue du système",
                 permissionsTitle = "Tableau des autorisations",
                 permissionsAllActive = "Toutes les autorisations système requises sont actives.",
                 permissionsGrantBoth =
-                        "Accordez les deux autorisations pour que FocusGuard puisse détecter et assombrir Instagram, TikTok et X.",
+                        "Accordez les deux autorisations pour que FocusGuard puisse détecter et assombrir Instagram, TikTok, X, Snapchat et Threads.",
                 permOverlayTitle = "Superposer sur d'autres applications",
                 permOverlaySubtitle =
                         "Affiche un filtre gris transparent lors des déverrouillages temporaires",
                 permAccessibilityTitle = "Service d'accessibilité",
                 permAccessibilitySubtitle =
-                        "Détecte l'ouverture d'Instagram, TikTok ou X au premier plan",
+                        "Détecte l'ouverture d'Instagram, TikTok, X, Snapchat ou Threads au premier plan",
                 actionSettings = "Paramètres",
                 actionGrant = "Autoriser",
                 masterBlockerTitle = "Bloqueur principal",
