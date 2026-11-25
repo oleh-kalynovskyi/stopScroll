@@ -77,6 +77,9 @@ val UkrainianStrings =
         sessionStatusCooldown = { untilTime, remainingMin ->
             "Блокування до $untilTime (залишилось $remainingMin хв)"
         },
+        sessionResetsAtHint = { limitMin, resetTime ->
+            "Оновиться до $limitMin хв о $resetTime без використання."
+        },
         sessionCooldownHint = { cooldownDuration ->
             "Спільний ліміт для всіх обраних застосунків. Після вичерпання вмикається жорстке блокування на $cooldownDuration; " +
                 "якщо не відкривати застосунки $cooldownDuration, таймер скинеться."

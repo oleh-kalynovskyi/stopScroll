@@ -296,6 +296,20 @@ internal fun SessionLimitCard(
                     trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             )
 
+            val resetsAtMillis = sessionStatus.resetsAtMillis
+            if (!sessionStatus.isCooldownActive && resetsAtMillis != null) {
+                Text(
+                        text =
+                                s.sessionResetsAtHint(
+                                        sessionStatus.limitMinutes,
+                                        formatClockTime(resetsAtMillis, is24Hour),
+                                ),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+
             Text(
                     text = s.sessionCooldownHint(s.formatDuration(SettingsManager.SESSION_COOLDOWN_MINUTES)),
                     style = MaterialTheme.typography.bodySmall,

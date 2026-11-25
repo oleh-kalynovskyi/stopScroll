@@ -82,6 +82,9 @@ val FrenchStrings =
                 sessionStatusCooldown = { untilTime, remainingMin ->
                     "Bloqué jusqu'à $untilTime ($remainingMin min restantes)"
                 },
+                sessionResetsAtHint = { limitMin, resetTime ->
+                    "Réinitialisation à $limitMin min à $resetTime sans utilisation."
+                },
                 sessionCooldownHint = { cooldownDuration ->
                     "Partagé entre toutes les apps sélectionnées. Une fois la limite atteinte, un blocage strict de $cooldownDuration démarre ; " +
                             "sans ouverture pendant $cooldownDuration, le minuteur se réinitialise."

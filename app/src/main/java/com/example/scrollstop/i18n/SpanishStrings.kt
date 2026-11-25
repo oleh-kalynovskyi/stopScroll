@@ -81,6 +81,9 @@ val SpanishStrings =
                 sessionStatusCooldown = { untilTime, remainingMin ->
                     "Bloqueado hasta las $untilTime (quedan $remainingMin min)"
                 },
+                sessionResetsAtHint = { limitMin, resetTime ->
+                    "Se reinicia a $limitMin min a las $resetTime si no se usan."
+                },
                 sessionCooldownHint = { cooldownDuration ->
                     "Compartido entre todas las apps seleccionadas. Al terminar, comienza un bloqueo estricto de $cooldownDuration; " +
                             "sin usar las apps durante $cooldownDuration el temporizador se reinicia."

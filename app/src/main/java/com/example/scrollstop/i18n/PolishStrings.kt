@@ -77,6 +77,9 @@ val PolishStrings =
         sessionStatusCooldown = { untilTime, remainingMin ->
             "Zablokowano do $untilTime (pozostało $remainingMin min)"
         },
+        sessionResetsAtHint = { limitMin, resetTime ->
+            "Zresetuje się do $limitMin min o $resetTime bez użycia."
+        },
         sessionCooldownHint = { cooldownDuration ->
             "Wspólny limit dla wszystkich wybranych aplikacji. Po jego wyczerpaniu włącza się ścisła blokada na $cooldownDuration; " +
                 "brak aktywności przez $cooldownDuration resetuje sesję."

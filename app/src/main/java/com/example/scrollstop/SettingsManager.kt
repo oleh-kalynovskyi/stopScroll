@@ -54,6 +54,7 @@ data class SessionStatus(
     val remainingMillis: Long,
     val cooldownUntilMillis: Long,
     val isCooldownActive: Boolean,
+    val resetsAtMillis: Long? = null,
 )
 
 enum class AddIntervalResult { ADDED, INVALID_SAME_TIME, DUPLICATE }
@@ -474,12 +475,18 @@ class SettingsManager internal constructor(
         }
 
         val used = prefs.getLong(KEY_SESSION_USED_MS, 0L).coerceIn(0L, limitMs)
+        val resetsAt = if (used > 0L && lastActivity > 0L) {
+            lastActivity + SESSION_COOLDOWN_MILLIS
+        } else {
+            null
+        }
         return SessionStatus(
             limitMinutes = limitMin,
             usedMillis = used,
             remainingMillis = (limitMs - used).coerceAtLeast(0L),
             cooldownUntilMillis = 0L,
             isCooldownActive = false,
+            resetsAtMillis = resetsAt,
         )
     }
 

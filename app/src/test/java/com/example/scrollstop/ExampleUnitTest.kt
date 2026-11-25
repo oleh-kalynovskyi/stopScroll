@@ -78,6 +78,7 @@ class ExampleUnitTest {
             assertFalse(s.sessionLimitCardTitle.isBlank())
             assertTrue(s.sessionStatusRemaining(12, 5, 15).contains("12:05"))
             assertTrue(s.sessionStatusCooldown("17:15", 45).contains("17:15"))
+            assertTrue(s.sessionResetsAtHint(15, "19:15").contains("19:15"))
             assertFalse(s.sessionCooldownHint("1h").isBlank())
             assertTrue(s.sessionWarningBanner(2).contains("2"))
             assertTrue(s.lockSessionCooldownReason(15, "1h").contains("15"))
@@ -152,15 +153,17 @@ class ExampleUnitTest {
         advanceUsage(settings, 6 * 60_000L, base)
         val lastActive = base + 6 * 60_000L
 
-        // After 59 minutes of inactivity, usage is still preserved
+        // After 59 minutes of inactivity, usage is still preserved and reset time is reported
         val statusAt59Min = settings.getSessionStatus(lastActive + 59 * 60_000L)
         assertEquals(6 * 60_000L, statusAt59Min.usedMillis)
         assertEquals(9 * 60_000L, statusAt59Min.remainingMillis)
+        assertEquals(lastActive + 60 * 60_000L, statusAt59Min.resetsAtMillis)
 
-        // After 60 minutes of inactivity, partial usage resets to 0
+        // After 60 minutes of inactivity, partial usage resets to 0 and reset time is cleared
         val statusAt60Min = settings.getSessionStatus(lastActive + 60 * 60_000L)
         assertEquals(0L, statusAt60Min.usedMillis)
         assertEquals(15 * 60_000L, statusAt60Min.remainingMillis)
+        assertNull(statusAt60Min.resetsAtMillis)
 
         // Recording a new 5s tick after 60 min inactivity starts fresh from 0
         assertEquals(

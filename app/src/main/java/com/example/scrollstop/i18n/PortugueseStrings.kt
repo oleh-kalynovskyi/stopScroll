@@ -81,6 +81,9 @@ val PortugueseStrings =
                 sessionStatusCooldown = { untilTime, remainingMin ->
                     "Bloqueado até $untilTime ($remainingMin min restantes)"
                 },
+                sessionResetsAtHint = { limitMin, resetTime ->
+                    "Reinicia para $limitMin min às $resetTime sem uso."
+                },
                 sessionCooldownHint = { cooldownDuration ->
                     "Compartilhado entre todos os apps selecionados. Ao atingir o limite, um bloqueio rígido de $cooldownDuration começa; " +
                             "ficar $cooldownDuration sem abrir os apps reinicia o cronômetro."

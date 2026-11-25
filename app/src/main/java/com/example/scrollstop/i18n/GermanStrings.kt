@@ -76,6 +76,9 @@ val GermanStrings =
         sessionStatusCooldown = { untilTime, remainingMin ->
             "Gesperrt bis $untilTime ($remainingMin Min. übrig)"
         },
+        sessionResetsAtHint = { limitMin, resetTime ->
+            "Wird um $resetTime ohne Nutzung auf $limitMin Min. zurückgesetzt."
+        },
         sessionCooldownHint = { cooldownDuration ->
             "Gemeinsames Limit für alle ausgewählten Apps. Nach Ablauf startet eine strikte Sperre für $cooldownDuration; " +
                 "ohne Nutzung für $cooldownDuration wird der Timer zurückgesetzt."

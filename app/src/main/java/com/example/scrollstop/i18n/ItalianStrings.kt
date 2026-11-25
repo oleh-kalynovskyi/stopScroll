@@ -77,6 +77,9 @@ val ItalianStrings =
         sessionStatusCooldown = { untilTime, remainingMin ->
             "Bloccato fino alle $untilTime ($remainingMin min rimasti)"
         },
+        sessionResetsAtHint = { limitMin, resetTime ->
+            "Si azzera a $limitMin min alle $resetTime senza utilizzo."
+        },
         sessionCooldownHint = { cooldownDuration ->
             "Condiviso tra tutte le app selezionate. Al termine inizia un blocco rigoroso di $cooldownDuration; " +
                 "non aprire le app per $cooldownDuration azzera il timer."

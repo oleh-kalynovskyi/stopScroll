@@ -75,6 +75,9 @@ val EnglishStrings =
         sessionStatusCooldown = { untilTime, remainingMin ->
             "Blocked until $untilTime ($remainingMin min left)"
         },
+        sessionResetsAtHint = { limitMin, resetTime ->
+            "Resets to $limitMin min at $resetTime if unused."
+        },
         sessionCooldownHint = { cooldownDuration ->
             "Shared across all selected apps. After the limit, a $cooldownDuration hard block starts; " +
                 "staying out of guarded apps for $cooldownDuration resets the session."

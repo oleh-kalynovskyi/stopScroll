@@ -126,6 +126,7 @@ data class AppStrings(
     val sessionLimitCardTitle: String,
     val sessionStatusRemaining: (mm: Long, ss: Long, limitMin: Int) -> String,
     val sessionStatusCooldown: (untilTime: String, remainingMin: Long) -> String,
+    val sessionResetsAtHint: (limitMin: Int, resetTime: String) -> String,
     val sessionCooldownHint: (cooldownDuration: String) -> String,
     val sessionWarningBanner: (minutesLeft: Int) -> String,
     // Custom intervals
