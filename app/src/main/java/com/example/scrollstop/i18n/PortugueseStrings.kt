@@ -41,12 +41,16 @@ val PortugueseStrings =
                     "Bloqueando $appsLabel agora$untilPart · desbloqueio de 15 min/h permitido"
                 },
                 statusArmedOutsideHours = "Ativado · fora do horário de bloqueio programado",
+                statusSessionActive = { mm, ss ->
+                    "Acesso livre · %d:%02d restantes na sessão".format(mm, ss)
+                },
                 untilTime = { time -> " até $time" },
                 allDaySuffix = " (24/7)",
                 endUnlockNowButton = "Encerrar desbloqueio e bloquear agora",
                 scheduleTitle = "Programação de bloqueio",
-                modeAllDay = "O dia todo (24/7)",
-                modeCustomPeriods = "Personalizado",
+                modeAllDay = "24/7",
+                modeCustomPeriods = "Períodos",
+                modeSessionLimit = "Sessão",
                 ruleHardBlockOn =
                         "O Bloqueio rígido está ATIVADO: nenhum desbloqueio temporário é oferecido em nenhum modo. " +
                                 "Os apps selecionados permanecem bloqueados até que você desative o bloqueador aqui.",
@@ -62,10 +66,28 @@ val PortugueseStrings =
                     "Períodos maiores que 2 horas (> 120 min) permitem até $quotaMin min/h de desbloqueio temporário. " +
                             "Períodos de 2 horas ou menos (<= 120 min) funcionam como Bloqueio rígido automaticamente."
                 },
+                ruleSessionLimit = { limitMin, cooldownDuration ->
+                    "Use os apps selecionados livremente por até $limitMin min sem tela cinza; depois eles ficam bloqueados rigidamente por $cooldownDuration. " +
+                            "Uma pausa de $cooldownDuration reinicia o cronômetro."
+                },
                 hardBlockCheckboxTitle =
                         "Bloqueio rígido (desativar todos os desbloqueios temporários)",
                 hardBlockCheckboxSubtitle =
                         "Aplica-se tanto ao modo O dia todo quanto aos Períodos personalizados.",
+                sessionLimitCardTitle = "Tempo de sessão permitido",
+                sessionStatusRemaining = { mm, ss, limitMin ->
+                    "%d:%02d restantes de %d min · sem tela cinza".format(mm, ss, limitMin)
+                },
+                sessionStatusCooldown = { untilTime, remainingMin ->
+                    "Bloqueado até $untilTime ($remainingMin min restantes)"
+                },
+                sessionCooldownHint = { cooldownDuration ->
+                    "Compartilhado entre todos os apps selecionados. Ao atingir o limite, um bloqueio rígido de $cooldownDuration começa; " +
+                            "ficar $cooldownDuration sem abrir os apps reinicia o cronômetro."
+                },
+                sessionWarningBanner = { minutesLeft ->
+                    "FocusGuard · restam $minutesLeft min antes do bloqueio de 1 h"
+                },
                 customPeriodsHeader = { count -> "Períodos personalizados ($count)" },
                 overnightSupportedSubtitle =
                         "Intervalos noturnos (ex.: 22:00 – 02:00) são suportados",
@@ -105,6 +127,9 @@ val PortugueseStrings =
                         "O Bloqueio rígido está ativado. Não é possível desbloquear a partir daqui.",
                 lockShortPeriodReason = { duration ->
                     "Este período de foco dura $duration. Períodos de 2 horas ou menos não podem ser desbloqueados."
+                },
+                lockSessionCooldownReason = { limitMin, cooldownDuration ->
+                    "Sua sessão de $limitMin min terminou. Os apps monitorados ficam pausados por $cooldownDuration."
                 },
                 lockLiftsAt = { time -> "O bloqueio termina às $time." },
                 lockRunsAllDay = "Este bloqueio dura o dia todo.",

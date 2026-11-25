@@ -164,7 +164,7 @@ private fun LockScreen(
     val language = remember(nowMillis) { settings.appLanguage }
     val strings = remember(language, configuration) { stringsFor(language) }
 
-    val state = remember(nowMillis) { settings.evaluate(nowMillis.toLocalDateTime()) }
+    val state = remember(nowMillis) { settings.evaluate(nowMillis.toLocalDateTime(), nowMillis) }
     val appSelected = remember(nowMillis, targetApp) { settings.isAppSelected(targetApp) }
     val unlockActive = state.unlockEligible && settings.isUnlockActive(nowMillis)
 
@@ -211,7 +211,11 @@ private fun LockScreen(
                     )
 
                     when {
-                        !state.unlockEligible -> HardBlockContent(state = state, is24Hour = is24Hour)
+                        !state.unlockEligible -> HardBlockContent(
+                            state = state,
+                            sessionLimitMinutes = settings.sessionLimitMinutes,
+                            is24Hour = is24Hour,
+                        )
                         secondsLeft > 0 -> FrictionCountdown(secondsLeft = secondsLeft, appName = appName)
                         else -> {
                             val remaining = remember(nowMillis) { settings.remainingQuotaMinutes(nowMillis) }
@@ -265,16 +269,27 @@ private fun LockBadge() {
 }
 
 @Composable
-private fun HardBlockContent(state: BlockState, is24Hour: Boolean) {
+private fun HardBlockContent(
+    state: BlockState,
+    sessionLimitMinutes: Int,
+    is24Hour: Boolean,
+) {
     val s = currentStrings
-    val reason = if (state.hardBlockEnabled) {
-        s.lockHardBlockEnabledReason
-    } else {
-        s.lockShortPeriodReason(s.formatDuration(state.periodMinutes))
+    val reason = when {
+        state.isSessionCooldown -> s.lockSessionCooldownReason(
+            sessionLimitMinutes,
+            s.formatDuration(SettingsManager.SESSION_COOLDOWN_MINUTES),
+        )
+        state.hardBlockEnabled -> s.lockHardBlockEnabledReason
+        else -> s.lockShortPeriodReason(s.formatDuration(state.periodMinutes))
     }
-    val ends = state.endMinuteOfDay
-        ?.let { s.lockLiftsAt(formatMinuteOfDay(it, is24Hour)) }
-        ?: s.lockRunsAllDay
+    val ends = when {
+        state.cooldownUntilMillis != null ->
+            s.lockLiftsAt(formatClockTime(state.cooldownUntilMillis, is24Hour))
+        state.endMinuteOfDay != null ->
+            s.lockLiftsAt(formatMinuteOfDay(state.endMinuteOfDay, is24Hour))
+        else -> s.lockRunsAllDay
+    }
 
     Text(
         text = reason,

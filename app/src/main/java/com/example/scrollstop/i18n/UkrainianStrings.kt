@@ -38,12 +38,16 @@ val UkrainianStrings =
             "Блокування $appsLabel активне$untilPart · доступно 15 хв/год"
         },
         statusArmedOutsideHours = "Увімкнено · поза розкладом блокування",
+        statusSessionActive = { mm, ss ->
+            "Вільний доступ · залишилось %d:%02d у сесії".format(mm, ss)
+        },
         untilTime = { time -> " до $time" },
         allDaySuffix = " (24/7)",
         endUnlockNowButton = "Завершити розблокування і заблокувати зараз",
         scheduleTitle = "Розклад блокування",
-        modeAllDay = "Весь день (24/7)",
-        modeCustomPeriods = "Власні періоди",
+        modeAllDay = "Весь день",
+        modeCustomPeriods = "Періоди",
+        modeSessionLimit = "Сесії",
         ruleHardBlockOn =
             "Жорстке блокування УВІМКНЕНО: тимчасові розблокування недоступні в жодному режимі. " +
                 "Обрані застосунки заблоковано, доки ви не вимкнете блокувальник тут.",
@@ -59,9 +63,27 @@ val UkrainianStrings =
             "Періоди понад 2 години (> 120 хв) дозволяють розблокування до $quotaMin хв/год. " +
                 "Періоди 2 години або менше (<= 120 хв) працюють як Жорстке блокування автоматично."
         },
+        ruleSessionLimit = { limitMin, cooldownDuration ->
+            "Користуйтеся обраними застосунками вільно до $limitMin хв без сірого екрана, після чого вони жорстко блокуються на $cooldownDuration. " +
+                "Перерва тривалістю $cooldownDuration автоматично скидає таймер."
+        },
         hardBlockCheckboxTitle = "Жорстке блокування (без тимчасових розблокувань)",
         hardBlockCheckboxSubtitle =
             "Діє як для режиму «Весь день», так і для власних періодів.",
+        sessionLimitCardTitle = "Дозволений час сесії",
+        sessionStatusRemaining = { mm, ss, limitMin ->
+            "Залишилось %d:%02d із %d хв · без сірого екрана".format(mm, ss, limitMin)
+        },
+        sessionStatusCooldown = { untilTime, remainingMin ->
+            "Блокування до $untilTime (залишилось $remainingMin хв)"
+        },
+        sessionCooldownHint = { cooldownDuration ->
+            "Спільний ліміт для всіх обраних застосунків. Після вичерпання вмикається жорстке блокування на $cooldownDuration; " +
+                "якщо не відкривати застосунки $cooldownDuration, таймер скинеться."
+        },
+        sessionWarningBanner = { minutesLeft ->
+            "FocusGuard · залишилось $minutesLeft хв до блокування на 1 год"
+        },
         customPeriodsHeader = { count -> "Власні часові періоди ($count)" },
         overnightSupportedSubtitle = "Підтримуються нічні інтервали (напр. 22:00 – 02:00)",
         addPeriodChip = "Додати період",
@@ -100,6 +122,9 @@ val UkrainianStrings =
             "Увімкнено Жорстке блокування. Розблокування з цього екрана неможливе.",
         lockShortPeriodReason = { duration ->
             "Цей період концентрації триває $duration. Періоди тривалістю 2 години або менше не можна розблокувати."
+        },
+        lockSessionCooldownReason = { limitMin, cooldownDuration ->
+            "Ваш ліміт сесії ($limitMin хв) вичерпано. Час зробити перерву на $cooldownDuration."
         },
         lockLiftsAt = { time -> "Блокування завершиться о $time." },
         lockRunsAllDay = "Блокування діє весь день.",

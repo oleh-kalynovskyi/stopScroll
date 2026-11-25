@@ -7,8 +7,9 @@
 ## ✨ Features
 
 - **Flexible Blocking Schedules**
-  - **All Day (24/7):** Block Instagram around the clock.
+  - **All Day (24/7):** Block selected apps around the clock.
   - **Custom Time Periods:** Add any number of custom focus intervals (including overnight ranges that cross midnight, such as `22:00 – 02:00`). Adjacent or overlapping intervals are automatically merged when evaluating active focus windows.
+  - **Session Limit Mode (Allowance + Cooldown):** Use selected apps freely in full color (no gray screen, no upfront lock screen) for a shared allowance of **5, 10, or 15 minutes** of active screen-on time. A non-intrusive top pill banner warns 2 minutes before the limit; once reached, apps are hard-blocked for **1 hour**. Staying away from guarded apps for 1 hour automatically resets any partial session usage.
 - **Automatic 2-Hour Rule & Hourly Quota**
   - **Short Focus Periods (`<= 2 hours`):** Automatically enforced as a **Hard Block** — no temporary unlock button is shown on the lock screen.
   - **Long Focus Periods (`> 2 hours`) or All Day Mode:** Allows up to **15 minutes of temporary unlock per clock hour** (when Hard Block is unchecked).

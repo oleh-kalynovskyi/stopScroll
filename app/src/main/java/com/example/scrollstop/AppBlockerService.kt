@@ -1,21 +1,29 @@
 package com.example.scrollstop
 
 import android.accessibilityservice.AccessibilityService
+import android.content.BroadcastReceiver
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.os.SystemClock
 import android.util.Log
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
+import android.widget.TextView
 
 /**
  * Watches foreground window changes and enforces the FocusGuard rules for guarded apps
@@ -28,28 +36,51 @@ class AppBlockerService : AccessibilityService() {
 
     private lateinit var settings: SettingsManager
     private lateinit var windowManager: WindowManager
+    private lateinit var powerManager: PowerManager
 
     private val handler = Handler(Looper.getMainLooper())
     private var overlayView: View? = null
+    private var warningBannerView: View? = null
     private var foregroundPackage: String? = null
     private var lastLockLaunchAt = 0L
     private var lastLockedApp: TargetApp? = null
     private var launcherPackages: Set<String> = emptySet()
     private val activityCache = HashMap<String, Boolean>()
 
+    private var isTrackingSession = false
+    private var lastSessionTickElapsed = 0L
+    private var screenReceiverRegistered = false
+
     private val evaluateRunnable = Runnable { evaluate() }
+    private val hideWarningRunnable = Runnable { hideWarningBanner() }
 
     // Kept as a field: SharedPreferences only holds listeners weakly.
-    private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+    private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key in SettingsManager.SESSION_RUNTIME_KEYS) return@OnSharedPreferenceChangeListener
         evaluate()
+    }
+
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Intent.ACTION_SCREEN_OFF -> {
+                    flushSessionUsage(System.currentTimeMillis())
+                    stopSessionTracking()
+                    handler.removeCallbacks(evaluateRunnable)
+                }
+                Intent.ACTION_SCREEN_ON -> evaluate()
+            }
+        }
     }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         settings = SettingsManager.getInstance(applicationContext)
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        powerManager = getSystemService(POWER_SERVICE) as PowerManager
         launcherPackages = resolveLauncherPackages()
         settings.registerListener(prefsListener)
+        registerScreenReceiver()
         Log.i(TAG, "AppBlockerService connected")
     }
 
@@ -77,8 +108,12 @@ class AppBlockerService : AccessibilityService() {
     }
 
     override fun onDestroy() {
+        flushSessionUsage(System.currentTimeMillis())
+        stopSessionTracking()
         handler.removeCallbacksAndMessages(null)
         hideOverlay()
+        hideWarningBanner()
+        unregisterScreenReceiver()
         if (::settings.isInitialized) settings.unregisterListener(prefsListener)
         super.onDestroy()
     }
@@ -89,14 +124,24 @@ class AppBlockerService : AccessibilityService() {
         handler.removeCallbacks(evaluateRunnable)
         if (!::settings.isInitialized) return
 
+        val nowMillis = System.currentTimeMillis()
         val targetApp = TargetApp.fromPackage(foregroundPackage)
         if (targetApp == null || !settings.isAppSelected(targetApp)) {
+            flushSessionUsage(nowMillis)
+            stopSessionTracking()
             hideOverlay()
             return
         }
 
-        val nowMillis = System.currentTimeMillis()
-        val state = settings.evaluate(nowMillis.toLocalDateTime())
+        if (settings.isEnabled && settings.scheduleMode == ScheduleMode.SESSION_LIMIT) {
+            evaluateSessionLimit(targetApp, nowMillis)
+            return
+        }
+
+        stopSessionTracking()
+        hideWarningBanner()
+
+        val state = settings.evaluate(nowMillis.toLocalDateTime(), nowMillis)
 
         when {
             !state.isBlocking -> {
@@ -116,6 +161,95 @@ class AppBlockerService : AccessibilityService() {
                 launchLockScreen(targetApp)
                 scheduleEvaluation(PERIODIC_CHECK_MS)
             }
+        }
+    }
+
+    private fun evaluateSessionLimit(targetApp: TargetApp, nowMillis: Long) {
+        // Session Limit mode never uses the gray screen overlay.
+        hideOverlay()
+
+        if (::powerManager.isInitialized && !powerManager.isInteractive) {
+            flushSessionUsage(nowMillis)
+            stopSessionTracking()
+            return
+        }
+
+        if (settings.isSessionCooldownActive(nowMillis)) {
+            stopSessionTracking()
+            hideWarningBanner()
+            launchLockScreen(targetApp)
+            scheduleEvaluation(PERIODIC_CHECK_MS)
+            return
+        }
+
+        val elapsedNow = SystemClock.elapsedRealtime()
+        val deltaMs = if (isTrackingSession) {
+            (elapsedNow - lastSessionTickElapsed).coerceAtLeast(0L)
+        } else {
+            isTrackingSession = true
+            0L
+        }
+        lastSessionTickElapsed = elapsedNow
+
+        when (settings.recordSessionUsage(deltaMs, nowMillis)) {
+            SessionTickResult.COOLDOWN_STARTED,
+            SessionTickResult.COOLDOWN_ACTIVE -> {
+                stopSessionTracking()
+                hideWarningBanner()
+                launchLockScreen(targetApp)
+                scheduleEvaluation(PERIODIC_CHECK_MS)
+            }
+            SessionTickResult.SHOW_WARNING -> {
+                showWarningBanner()
+                scheduleEvaluation(SESSION_TICK_MS)
+            }
+            SessionTickResult.ACTIVE -> {
+                scheduleEvaluation(SESSION_TICK_MS)
+            }
+        }
+    }
+
+    private fun flushSessionUsage(nowMillis: Long) {
+        if (!isTrackingSession || !::settings.isInitialized) return
+        if (!settings.isEnabled || settings.scheduleMode != ScheduleMode.SESSION_LIMIT) return
+        val elapsedNow = SystemClock.elapsedRealtime()
+        val deltaMs = (elapsedNow - lastSessionTickElapsed).coerceAtLeast(0L)
+        lastSessionTickElapsed = elapsedNow
+        if (deltaMs > 0L) {
+            settings.recordSessionUsage(deltaMs, nowMillis)
+        }
+    }
+
+    private fun stopSessionTracking() {
+        isTrackingSession = false
+        lastSessionTickElapsed = 0L
+    }
+
+    private fun registerScreenReceiver() {
+        if (screenReceiverRegistered) return
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
+        }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(screenReceiver, filter, RECEIVER_NOT_EXPORTED)
+            } else {
+                registerReceiver(screenReceiver, filter)
+            }
+            screenReceiverRegistered = true
+        } catch (e: Exception) {
+            Log.w(TAG, "Unable to register screen receiver", e)
+        }
+    }
+
+    private fun unregisterScreenReceiver() {
+        if (!screenReceiverRegistered) return
+        screenReceiverRegistered = false
+        try {
+            unregisterReceiver(screenReceiver)
+        } catch (e: Exception) {
+            Log.w(TAG, "Unable to unregister screen receiver", e)
         }
     }
 
@@ -196,6 +330,75 @@ class AppBlockerService : AccessibilityService() {
         }
     }
 
+    private fun showWarningBanner() {
+        hideWarningBanner()
+        val s = stringsFor(settings.appLanguage)
+        val density = resources.displayMetrics.density
+        val padH = (18 * density).toInt()
+        val padV = (10 * density).toInt()
+        val radius = 24 * density
+        val topMargin = (52 * density).toInt()
+
+        val pillBackground = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = radius
+            setColor(Color.parseColor(WARNING_BANNER_BG_COLOR))
+            setStroke((1 * density).toInt().coerceAtLeast(1), Color.parseColor(WARNING_BANNER_BORDER_COLOR))
+        }
+
+        val banner = TextView(this).apply {
+            text = s.sessionWarningBanner(SettingsManager.SESSION_WARNING_MINUTES)
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            background = pillBackground
+            setPadding(padH, padV, padH, padV)
+            elevation = 8 * density
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+        }
+
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            PixelFormat.TRANSLUCENT,
+        ).apply {
+            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+            y = topMargin
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+        }
+
+        try {
+            windowManager.addView(banner, params)
+            warningBannerView = banner
+            handler.removeCallbacks(hideWarningRunnable)
+            handler.postDelayed(hideWarningRunnable, WARNING_BANNER_DURATION_MS)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to show session warning banner", e)
+        }
+    }
+
+    private fun hideWarningBanner() {
+        handler.removeCallbacks(hideWarningRunnable)
+        val view = warningBannerView ?: return
+        warningBannerView = null
+        try {
+            windowManager.removeViewImmediate(view)
+        } catch (e: Exception) {
+            try {
+                windowManager.removeView(view)
+            } catch (ignored: Exception) {
+                Log.w(TAG, "Warning banner already removed", ignored)
+            }
+        }
+    }
+
     // endregion
 
     // region Foreground detection helpers
@@ -233,8 +436,12 @@ class AppBlockerService : AccessibilityService() {
         private const val SYSTEM_UI_PACKAGE = "com.android.systemui"
         private const val SETTINGS_PACKAGE = "com.android.settings"
         private const val OVERLAY_COLOR = "#CC2C2C2C"
+        private const val WARNING_BANNER_BG_COLOR = "#EB1E1F26"
+        private const val WARNING_BANNER_BORDER_COLOR = "#40FFFFFF"
         private const val DEFAULT_OVERLAY_ALPHA = 0.8f
         private const val PERIODIC_CHECK_MS = 3_000L
+        private const val SESSION_TICK_MS = 1_000L
+        private const val WARNING_BANNER_DURATION_MS = 5_000L
         private const val EXPIRY_GRACE_MS = 100L
         private const val LOCK_RELAUNCH_DEBOUNCE_MS = 1_000L
         private const val ACTIVITY_CACHE_LIMIT = 500

@@ -63,6 +63,7 @@ import com.example.scrollstop.ui.components.LanguageSelector
 import com.example.scrollstop.ui.components.MasterToggleCard
 import com.example.scrollstop.ui.components.PermissionsCard
 import com.example.scrollstop.ui.components.ScheduleCard
+import com.example.scrollstop.ui.components.SessionLimitCard
 import com.example.scrollstop.ui.components.TimePickerDialog
 import kotlinx.coroutines.delay
 
@@ -91,6 +92,7 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
     var mode by remember { mutableStateOf(settings.scheduleMode) }
     var hardBlock by remember { mutableStateOf(settings.isHardBlock) }
     var intervals by remember { mutableStateOf(settings.getIntervals()) }
+    var sessionLimitMinutes by remember { mutableIntStateOf(settings.sessionLimitMinutes) }
     var language by remember { mutableStateOf(settings.appLanguage) }
 
     var overlayGranted by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
@@ -103,6 +105,7 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
         mode = settings.scheduleMode
         hardBlock = settings.isHardBlock
         intervals = settings.getIntervals()
+        sessionLimitMinutes = settings.sessionLimitMinutes
         language = settings.appLanguage
         nowMillis = System.currentTimeMillis()
     }
@@ -141,8 +144,12 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
     val strings = remember(language, configuration) { stringsFor(language) }
 
     val blockState =
-            remember(nowMillis, enabled, mode, hardBlock, intervals) {
-                settings.evaluate(nowMillis.toLocalDateTime())
+            remember(nowMillis, enabled, mode, hardBlock, intervals, sessionLimitMinutes) {
+                settings.evaluate(nowMillis.toLocalDateTime(), nowMillis)
+            }
+    val sessionStatus =
+            remember(nowMillis, enabled, mode, sessionLimitMinutes) {
+                settings.getSessionStatus(nowMillis)
             }
     val unlockActive = blockState.unlockEligible && settings.isUnlockActive(nowMillis)
     val remainingQuota =
@@ -212,6 +219,8 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
                     item(key = "master") {
                         MasterToggleCard(
                                 enabled = enabled,
+                                mode = mode,
+                                sessionStatus = sessionStatus,
                                 selectedApps = selectedApps,
                                 showMinOneAppHint = showMinOneAppHint,
                                 accessibilityGranted = accessibilityGranted,
@@ -241,6 +250,7 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
                                 mode = mode,
                                 hardBlock = hardBlock,
                                 intervalsCount = intervals.size,
+                                sessionLimitMinutes = sessionLimitMinutes,
                                 onModeChange = {
                                     settings.scheduleMode = it
                                     refreshFromSettings()
@@ -250,6 +260,21 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
                                     refreshFromSettings()
                                 },
                         )
+                    }
+
+                    if (mode == ScheduleMode.SESSION_LIMIT) {
+                        item(key = "session-limit") {
+                            SessionLimitCard(
+                                    selectedMinutes = sessionLimitMinutes,
+                                    sessionStatus = sessionStatus,
+                                    nowMillis = nowMillis,
+                                    is24Hour = is24Hour,
+                                    onSelectMinutes = { minutes ->
+                                        settings.sessionLimitMinutes = minutes
+                                        refreshFromSettings()
+                                    },
+                            )
+                        }
                     }
 
                     if (mode == ScheduleMode.CUSTOM) {
@@ -311,15 +336,17 @@ internal fun FocusGuardScreen(settings: SettingsManager) {
                         }
                     }
 
-                    item(key = "quota") {
-                        HourlyQuotaCard(
-                                remainingMinutes = remainingQuota,
-                                nextResetTime =
-                                        formatClockTime(
-                                                settings.nextHourStartMillis(nowMillis),
-                                                is24Hour,
-                                        ),
-                        )
+                    if (mode != ScheduleMode.SESSION_LIMIT) {
+                        item(key = "quota") {
+                            HourlyQuotaCard(
+                                    remainingMinutes = remainingQuota,
+                                    nextResetTime =
+                                            formatClockTime(
+                                                    settings.nextHourStartMillis(nowMillis),
+                                                    is24Hour,
+                                            ),
+                            )
+                        }
                     }
 
                     item(key = "bottom-space") { Spacer(Modifier.height(16.dp)) }

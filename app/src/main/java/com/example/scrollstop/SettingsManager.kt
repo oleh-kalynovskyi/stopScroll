@@ -44,7 +44,17 @@ data class TimeInterval(
         }
 }
 
-enum class ScheduleMode { ALL_DAY, CUSTOM }
+enum class ScheduleMode { ALL_DAY, CUSTOM, SESSION_LIMIT }
+
+enum class SessionTickResult { ACTIVE, SHOW_WARNING, COOLDOWN_STARTED, COOLDOWN_ACTIVE }
+
+data class SessionStatus(
+    val limitMinutes: Int,
+    val usedMillis: Long,
+    val remainingMillis: Long,
+    val cooldownUntilMillis: Long,
+    val isCooldownActive: Boolean,
+)
 
 enum class AddIntervalResult { ADDED, INVALID_SAME_TIME, DUPLICATE }
 
@@ -110,6 +120,8 @@ data class BlockState(
     val coversWholeDay: Boolean,
     val periodMinutes: Int,
     val endMinuteOfDay: Int?,
+    val isSessionCooldown: Boolean = false,
+    val cooldownUntilMillis: Long? = null,
 ) {
     companion object {
         val NOT_BLOCKING = BlockState(
@@ -146,7 +158,13 @@ class SettingsManager internal constructor(
         get() = prefs.getBoolean(KEY_ENABLED, false)
         set(value) = prefs.edit {
             putBoolean(KEY_ENABLED, value)
-            if (!value) putLong(KEY_UNLOCK_UNTIL, 0L)
+            if (!value) {
+                putLong(KEY_UNLOCK_UNTIL, 0L)
+                putLong(KEY_SESSION_USED_MS, 0L)
+                putLong(KEY_SESSION_LAST_ACTIVITY_MS, 0L)
+                putLong(KEY_SESSION_COOLDOWN_UNTIL, 0L)
+                putBoolean(KEY_SESSION_WARNED, false)
+            }
         }
 
     var scheduleMode: ScheduleMode
@@ -154,6 +172,15 @@ class SettingsManager internal constructor(
             ?.let { name -> ScheduleMode.entries.firstOrNull { it.name == name } }
             ?: ScheduleMode.ALL_DAY
         set(value) = prefs.edit { putString(KEY_MODE, value.name) }
+
+    var sessionLimitMinutes: Int
+        get() = prefs.getInt(KEY_SESSION_LIMIT_MINUTES, DEFAULT_SESSION_LIMIT_MINUTES)
+            .takeIf { it in SESSION_LIMIT_OPTIONS }
+            ?: DEFAULT_SESSION_LIMIT_MINUTES
+        set(value) {
+            val sanitized = value.takeIf { it in SESSION_LIMIT_OPTIONS } ?: DEFAULT_SESSION_LIMIT_MINUTES
+            prefs.edit { putInt(KEY_SESSION_LIMIT_MINUTES, sanitized) }
+        }
 
     var isHardBlock: Boolean
         get() = prefs.getBoolean(KEY_HARD_BLOCK, false)
@@ -250,9 +277,30 @@ class SettingsManager internal constructor(
 
     // region Schedule evaluation
 
-    fun evaluate(now: LocalDateTime = LocalDateTime.now()): BlockState {
+    fun evaluate(
+        now: LocalDateTime = LocalDateTime.now(),
+        nowMillis: Long = System.currentTimeMillis(),
+    ): BlockState {
         if (!isEnabled) return BlockState.NOT_BLOCKING
         val hardBlock = isHardBlock
+
+        if (scheduleMode == ScheduleMode.SESSION_LIMIT) {
+            val cooldownUntil = sessionCooldownUntilMillis
+            if (cooldownUntil > nowMillis) {
+                val endLocal = cooldownUntil.toLocalDateTime(zoneProvider())
+                return BlockState(
+                    isBlocking = true,
+                    unlockEligible = false,
+                    hardBlockEnabled = true,
+                    coversWholeDay = false,
+                    periodMinutes = SESSION_COOLDOWN_MINUTES,
+                    endMinuteOfDay = endLocal.hour * 60 + endLocal.minute,
+                    isSessionCooldown = true,
+                    cooldownUntilMillis = cooldownUntil,
+                )
+            }
+            return BlockState.NOT_BLOCKING
+        }
 
         if (scheduleMode == ScheduleMode.ALL_DAY) {
             return wholeDayState(hardBlock)
@@ -382,6 +430,108 @@ class SettingsManager internal constructor(
 
     // endregion
 
+    // region Session limit + cooldown
+
+    val sessionCooldownUntilMillis: Long
+        get() = prefs.getLong(KEY_SESSION_COOLDOWN_UNTIL, 0L)
+
+    fun isSessionCooldownActive(nowMillis: Long = System.currentTimeMillis()): Boolean =
+        sessionCooldownUntilMillis > nowMillis
+
+    fun getSessionStatus(nowMillis: Long = System.currentTimeMillis()): SessionStatus {
+        val limitMin = sessionLimitMinutes
+        val limitMs = limitMin * MILLIS_PER_MINUTE
+        val cooldownUntil = sessionCooldownUntilMillis
+
+        if (cooldownUntil > nowMillis) {
+            return SessionStatus(
+                limitMinutes = limitMin,
+                usedMillis = limitMs,
+                remainingMillis = 0L,
+                cooldownUntilMillis = cooldownUntil,
+                isCooldownActive = true,
+            )
+        }
+        if (cooldownUntil in 1L..nowMillis) {
+            return SessionStatus(
+                limitMinutes = limitMin,
+                usedMillis = 0L,
+                remainingMillis = limitMs,
+                cooldownUntilMillis = 0L,
+                isCooldownActive = false,
+            )
+        }
+
+        val lastActivity = prefs.getLong(KEY_SESSION_LAST_ACTIVITY_MS, 0L)
+        if (lastActivity > 0L && nowMillis - lastActivity >= SESSION_COOLDOWN_MILLIS) {
+            return SessionStatus(
+                limitMinutes = limitMin,
+                usedMillis = 0L,
+                remainingMillis = limitMs,
+                cooldownUntilMillis = 0L,
+                isCooldownActive = false,
+            )
+        }
+
+        val used = prefs.getLong(KEY_SESSION_USED_MS, 0L).coerceIn(0L, limitMs)
+        return SessionStatus(
+            limitMinutes = limitMin,
+            usedMillis = used,
+            remainingMillis = (limitMs - used).coerceAtLeast(0L),
+            cooldownUntilMillis = 0L,
+            isCooldownActive = false,
+        )
+    }
+
+    /**
+     * Records active foreground usage [deltaMs] in Session Limit mode.
+     * Resets partial usage automatically after [SESSION_COOLDOWN_MINUTES] of inactivity.
+     * Triggers a 1-hour hard cooldown once the configured session allowance is reached.
+     */
+    fun recordSessionUsage(
+        deltaMs: Long,
+        nowMillis: Long = System.currentTimeMillis(),
+    ): SessionTickResult {
+        val limitMs = sessionLimitMinutes * MILLIS_PER_MINUTE
+        val cooldownUntil = sessionCooldownUntilMillis
+        if (cooldownUntil > nowMillis) return SessionTickResult.COOLDOWN_ACTIVE
+
+        val lastActivity = prefs.getLong(KEY_SESSION_LAST_ACTIVITY_MS, 0L)
+        val shouldReset = cooldownUntil in 1L..nowMillis ||
+            (lastActivity > 0L && nowMillis - lastActivity >= SESSION_COOLDOWN_MILLIS)
+
+        val currentUsed = if (shouldReset) 0L else prefs.getLong(KEY_SESSION_USED_MS, 0L).coerceAtLeast(0L)
+        val alreadyWarned = if (shouldReset) false else prefs.getBoolean(KEY_SESSION_WARNED, false)
+
+        val safeDelta = deltaMs.coerceIn(0L, MAX_SESSION_TICK_MS)
+        val newUsed = currentUsed + safeDelta
+
+        if (newUsed >= limitMs) {
+            prefs.edit {
+                putLong(KEY_SESSION_USED_MS, 0L)
+                putLong(KEY_SESSION_LAST_ACTIVITY_MS, nowMillis)
+                putLong(KEY_SESSION_COOLDOWN_UNTIL, nowMillis + SESSION_COOLDOWN_MILLIS)
+                putBoolean(KEY_SESSION_WARNED, false)
+            }
+            return SessionTickResult.COOLDOWN_STARTED
+        }
+
+        val remaining = limitMs - newUsed
+        val shouldWarn = !alreadyWarned &&
+            limitMs > SESSION_WARNING_MILLIS &&
+            remaining <= SESSION_WARNING_MILLIS
+
+        prefs.edit {
+            putLong(KEY_SESSION_USED_MS, newUsed)
+            putLong(KEY_SESSION_LAST_ACTIVITY_MS, nowMillis)
+            putLong(KEY_SESSION_COOLDOWN_UNTIL, 0L)
+            putBoolean(KEY_SESSION_WARNED, alreadyWarned || shouldWarn)
+        }
+        return if (shouldWarn) SessionTickResult.SHOW_WARNING else SessionTickResult.ACTIVE
+    }
+
+    // endregion
+
     // region Listeners
 
     fun registerListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
@@ -399,9 +549,16 @@ class SettingsManager internal constructor(
         const val QUOTA_MINUTES_PER_HOUR = 15
         const val MIN_PERIOD_FOR_UNLOCK_MINUTES = 120
         const val FRICTION_SECONDS = 10
+        const val DEFAULT_SESSION_LIMIT_MINUTES = 15
+        const val SESSION_COOLDOWN_MINUTES = 60
+        const val SESSION_WARNING_MINUTES = 2
+        val SESSION_LIMIT_OPTIONS = listOf(5, 10, 15)
 
         private const val MILLIS_PER_MINUTE = 60_000L
         private const val QUOTA_MILLIS_PER_HOUR = QUOTA_MINUTES_PER_HOUR * MILLIS_PER_MINUTE
+        private const val SESSION_COOLDOWN_MILLIS = SESSION_COOLDOWN_MINUTES * MILLIS_PER_MINUTE
+        private const val SESSION_WARNING_MILLIS = SESSION_WARNING_MINUTES * MILLIS_PER_MINUTE
+        private const val MAX_SESSION_TICK_MS = 10_000L
 
         private const val PREFS_NAME = "focusguard_settings"
         private const val KEY_ENABLED = "enabled"
@@ -412,6 +569,18 @@ class SettingsManager internal constructor(
         private const val KEY_UNLOCK_UNTIL = "unlock_until"
         private const val KEY_LANGUAGE = "app_language"
         private const val KEY_APP_SELECTED_PREFIX = "app_selected_"
+        private const val KEY_SESSION_LIMIT_MINUTES = "session_limit_minutes"
+        private const val KEY_SESSION_USED_MS = "session_used_ms"
+        private const val KEY_SESSION_LAST_ACTIVITY_MS = "session_last_activity_ms"
+        private const val KEY_SESSION_COOLDOWN_UNTIL = "session_cooldown_until"
+        private const val KEY_SESSION_WARNED = "session_warned"
+
+        val SESSION_RUNTIME_KEYS = setOf(
+            KEY_SESSION_USED_MS,
+            KEY_SESSION_LAST_ACTIVITY_MS,
+            KEY_SESSION_COOLDOWN_UNTIL,
+            KEY_SESSION_WARNED,
+        )
 
         @Volatile
         private var instance: SettingsManager? = null

@@ -42,12 +42,16 @@ val FrenchStrings =
                     "Blocage de $appsLabel actif$untilPart · déverrouillage 15 min/h autorisé"
                 },
                 statusArmedOutsideHours = "Activé · en dehors des heures de blocage programmées",
+                statusSessionActive = { mm, ss ->
+                    "Accès libre · %d:%02d restantes dans la session".format(mm, ss)
+                },
                 untilTime = { time -> " jusqu'à $time" },
                 allDaySuffix = " (24h/24)",
                 endUnlockNowButton = "Terminer le déverrouillage et reverrouiller",
                 scheduleTitle = "Planning de blocage",
-                modeAllDay = "Toute la journée (24h/7)",
-                modeCustomPeriods = "Plages personnalisées",
+                modeAllDay = "24h/24",
+                modeCustomPeriods = "Plages",
+                modeSessionLimit = "Session",
                 ruleHardBlockOn =
                         "Le Blocage strict est ACTIVÉ : aucun déverrouillage temporaire n'est proposé. " +
                                 "Les applications sélectionnées restent verrouillées jusqu'à ce que vous désactiviez le bloqueur ici.",
@@ -63,10 +67,28 @@ val FrenchStrings =
                     "Les plages de plus de 2 heures (> 120 min) permettent jusqu'à $quotaMin min/h de déverrouillage temporaire. " +
                             "Les plages de 2 heures ou moins (<= 120 min) agissent automatiquement comme un Blocage strict."
                 },
+                ruleSessionLimit = { limitMin, cooldownDuration ->
+                    "Utilisez les apps sélectionnées librement jusqu'à $limitMin min sans écran gris, puis elles sont bloquées strictement pendant $cooldownDuration. " +
+                            "Une pause de $cooldownDuration réinitialise le minuteur."
+                },
                 hardBlockCheckboxTitle =
                         "Blocage strict (désactiver tous les déverrouillages temporaires)",
                 hardBlockCheckboxSubtitle =
                         "S'applique aux modes Toute la journée et Plages personnalisées.",
+                sessionLimitCardTitle = "Durée de session autorisée",
+                sessionStatusRemaining = { mm, ss, limitMin ->
+                    "%d:%02d restantes sur %d min · sans écran gris".format(mm, ss, limitMin)
+                },
+                sessionStatusCooldown = { untilTime, remainingMin ->
+                    "Bloqué jusqu'à $untilTime ($remainingMin min restantes)"
+                },
+                sessionCooldownHint = { cooldownDuration ->
+                    "Partagé entre toutes les apps sélectionnées. Une fois la limite atteinte, un blocage strict de $cooldownDuration démarre ; " +
+                            "sans ouverture pendant $cooldownDuration, le minuteur se réinitialise."
+                },
+                sessionWarningBanner = { minutesLeft ->
+                    "FocusGuard · $minutesLeft min restantes avant blocage d'1 h"
+                },
                 customPeriodsHeader = { count -> "Plages horaires personnalisées ($count)" },
                 overnightSupportedSubtitle =
                         "Les plages nocturnes (ex. 22:00 – 02:00) sont prises en charge",
@@ -106,6 +128,9 @@ val FrenchStrings =
                         "Le Blocage strict est activé. Il est impossible de déverrouiller depuis cet écran.",
                 lockShortPeriodReason = { duration ->
                     "Cette période de concentration dure $duration. Les périodes de 2 heures ou moins ne peuvent pas être déverrouillées."
+                },
+                lockSessionCooldownReason = { limitMin, cooldownDuration ->
+                    "Votre session de $limitMin min est terminée. Les apps surveillées sont en pause pendant $cooldownDuration."
                 },
                 lockLiftsAt = { time -> "Le blocage prend fin à $time." },
                 lockRunsAllDay = "Ce blocage est actif toute la journée.",

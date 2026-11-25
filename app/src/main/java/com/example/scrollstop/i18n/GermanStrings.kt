@@ -38,12 +38,16 @@ val GermanStrings =
             "Blockiere $appsLabel$untilPart · 15 Min./Std. Entsperrung erlaubt"
         },
         statusArmedOutsideHours = "Aktiviert · außerhalb der geplanten Sperrzeiten",
+        statusSessionActive = { mm, ss ->
+            "Freier Zugang · %d:%02d in dieser Sitzung übrig".format(mm, ss)
+        },
         untilTime = { time -> " bis $time" },
         allDaySuffix = " (24/7)",
         endUnlockNowButton = "Entsperrung beenden & Apps jetzt sperren",
         scheduleTitle = "Sperrzeitplan",
-        modeAllDay = "Ganztägig (24/7)",
-        modeCustomPeriods = "Eigene Zeiträume",
+        modeAllDay = "Ganztägig",
+        modeCustomPeriods = "Zeiträume",
+        modeSessionLimit = "Sitzung",
         ruleHardBlockOn =
             "Strikte Sperre ist AN: In keinem Modus sind temporäre Entsperrungen möglich. " +
                 "Ausgewählte Apps bleiben gesperrt, bis du den Blocker hier ausschaltets.",
@@ -59,8 +63,26 @@ val GermanStrings =
             "Zeiträume über 2 Stunden (> 120 Min.) erlauben bis zu $quotaMin Min./Std. temporäre Entsperrung. " +
                 "Zeiträume von 2 Stunden oder weniger (<= 120 Min.) wirken automatisch als strikte Sperre."
         },
+        ruleSessionLimit = { limitMin, cooldownDuration ->
+            "Nutze ausgewählte Apps bis zu $limitMin Min. frei ohne Graufilter, danach werden sie für $cooldownDuration strikt gesperrt. " +
+                "Eine Pause von $cooldownDuration setzt den Timer zurück."
+        },
         hardBlockCheckboxTitle = "Strikte Sperre (alle temporären Entsperrungen deaktivieren)",
         hardBlockCheckboxSubtitle = "Gilt sowohl für Ganztägig als auch für eigene Zeiträume.",
+        sessionLimitCardTitle = "Sitzungslimit",
+        sessionStatusRemaining = { mm, ss, limitMin ->
+            "%d:%02d von %d Min. übrig · kein Graufilter".format(mm, ss, limitMin)
+        },
+        sessionStatusCooldown = { untilTime, remainingMin ->
+            "Gesperrt bis $untilTime ($remainingMin Min. übrig)"
+        },
+        sessionCooldownHint = { cooldownDuration ->
+            "Gemeinsames Limit für alle ausgewählten Apps. Nach Ablauf startet eine strikte Sperre für $cooldownDuration; " +
+                "ohne Nutzung für $cooldownDuration wird der Timer zurückgesetzt."
+        },
+        sessionWarningBanner = { minutesLeft ->
+            "FocusGuard · noch $minutesLeft Min. bis zur 1-Std.-Sperre"
+        },
         customPeriodsHeader = { count -> "Eigene Zeiträume ($count)" },
         overnightSupportedSubtitle = "Zeiträume über Mitternacht (z. B. 22:00 – 02:00) werden unterstützt",
         addPeriodChip = "Zeitraum hinzufügen",
@@ -99,6 +121,9 @@ val GermanStrings =
             "Strikte Sperre ist aktiv. Eine Entsperrung ist von hier aus nicht möglich.",
         lockShortPeriodReason = { duration ->
             "Dieser Fokuszeitraum dauert $duration. Zeiträume von 2 Stunden oder weniger können nicht entsperrt werden."
+        },
+        lockSessionCooldownReason = { limitMin, cooldownDuration ->
+            "Dein Sitzungslimit von $limitMin Min. ist erreicht. Geschützte Apps pausieren für $cooldownDuration."
         },
         lockLiftsAt = { time -> "Die Sperre endet um $time." },
         lockRunsAllDay = "Diese Sperre gilt den ganzen Tag.",

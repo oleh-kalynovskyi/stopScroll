@@ -33,6 +33,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.scrollstop.BlockState
+import com.example.scrollstop.ScheduleMode
+import com.example.scrollstop.SessionStatus
 import com.example.scrollstop.SettingsManager
 import com.example.scrollstop.TargetApp
 import com.example.scrollstop.currentStrings
@@ -42,6 +44,8 @@ import com.example.scrollstop.formatMinuteOfDay
 @Composable
 internal fun MasterToggleCard(
     enabled: Boolean,
+    mode: ScheduleMode,
+    sessionStatus: SessionStatus,
     selectedApps: Set<TargetApp>,
     showMinOneAppHint: Boolean,
     accessibilityGranted: Boolean,
@@ -85,6 +89,11 @@ internal fun MasterToggleCard(
                 ?.let { s.untilTime(formatMinuteOfDay(it, is24Hour)) }
                 ?: s.allDaySuffix
             s.statusBlockingNow(appsLabel, end)
+        }
+
+        mode == ScheduleMode.SESSION_LIMIT -> {
+            val remSecs = ((sessionStatus.remainingMillis + 999L) / 1_000L).coerceAtLeast(0L)
+            s.statusSessionActive(remSecs / 60L, remSecs % 60L)
         }
 
         else -> s.statusArmedOutsideHours
