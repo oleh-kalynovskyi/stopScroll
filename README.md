@@ -20,10 +20,10 @@
     - **1-Hour Hard Cooldown:** Once the limit is reached, selected apps are hard-blocked for **1 hour** with a lock screen showing the exact time access returns.
     - **Hybrid Inactivity Auto-Reset:** Stepping away from all guarded apps for 1 hour automatically resets any partial session usage back to the full allowance.
     - **Live Status & Progress:** The home screen displays a real-time countdown and progress bar for your remaining session time or active cooldown.
-- **Automatic 2-Hour Rule & Hourly Quota** *(All Day & Custom Modes)*
+- **Automatic 2-Hour Rule & Hourly Quota** _(All Day & Custom Modes)_
   - **Short Focus Periods (`<= 2 hours`):** Automatically enforced as a **Hard Block** — no temporary unlock button is shown on the lock screen.
   - **Long Focus Periods (`> 2 hours`) or All Day Mode:** Allows up to **15 minutes of temporary unlock per clock hour** (when Hard Block is unchecked).
-- **Hard Block Mode** *(All Day & Custom Modes)*
+- **Hard Block Mode** _(All Day & Custom Modes)_
   - Optional checkbox that disables all temporary unlocks completely. The only way to lift a Hard Block early is to open FocusGuard and change your settings.
 - **10-Second Mindful Friction Pause**
   - Before spending your hourly unlock quota in All Day / Custom mode, the lock screen displays a 10-second breathing countdown so impulsive opens can be abandoned with a single tap on **Exit to Home Screen**.
@@ -40,13 +40,13 @@
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-| :--- | :--- |
-| **Language** | 100% Kotlin |
-| **UI** | Jetpack Compose + Material 3 (Dark Theme) |
+| Layer                  | Technology                                                                                           |
+| :--------------------- | :--------------------------------------------------------------------------------------------------- |
+| **Language**           | 100% Kotlin                                                                                          |
+| **UI**                 | Jetpack Compose + Material 3 (Dark Theme)                                                            |
 | **System Integration** | `AccessibilityService` (`TYPE_WINDOW_STATE_CHANGED`), `WindowManager` (`TYPE_ACCESSIBILITY_OVERLAY`) |
-| **Persistence** | `SharedPreferences` + `Gson` |
-| **SDK Levels** | `minSdk = 26` (Android 8.0) · `targetSdk = 35` (Android 15) |
+| **Persistence**        | `SharedPreferences` + `Gson`                                                                         |
+| **SDK Levels**         | `minSdk = 26` (Android 8.0) · `targetSdk = 35` (Android 15)                                          |
 
 ---
 
@@ -79,6 +79,7 @@ app/src/main/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - **Android Studio** Ladybug or newer
 - **JDK 11+**
 - An Android device or emulator running **Android 8.0 (API 26)** or higher
@@ -86,12 +87,14 @@ app/src/main/
 ### Build & Install
 
 1. **Clone the repository:**
+
    ```bash
-   git clone https://github.com/<your-username>/ScrollStop.git
+   git clone https://github.com/oleh-kalynovskyi/ScrollStop.git
    cd ScrollStop
    ```
 
 2. **Open in Android Studio** and press **Run (`▶`)**, or build/install from the terminal:
+
    ```bash
    # Build debug APK
    ./gradlew :app:assembleDebug
@@ -102,6 +105,7 @@ app/src/main/
    # Install directly onto a connected device
    ./gradlew :app:installDebug
    ```
+
    The debug APK will be generated at `app/build/outputs/apk/debug/app-debug.apk`.
 
 ---
@@ -117,7 +121,8 @@ FocusGuard requires two Android system permissions shown at the top of the home 
    - Configured with `android:canRetrieveWindowContent="false"` — **FocusGuard cannot read your messages, passwords, or screen text**.
 
 > **Note for Android 13+ (Sideloaded APKs):**
-> If Android shows *"Restricted setting"* when you try to enable **FocusGuard Blocker** in Accessibility Settings:
+> If Android shows _"Restricted setting"_ when you try to enable **FocusGuard Blocker** in Accessibility Settings:
+>
 > 1. Open **System Settings → Apps → FocusGuard**.
 > 2. Tap the **⋮** menu in the top-right corner and select **Allow restricted settings**.
 > 3. Return to **Accessibility Settings** and enable **FocusGuard Blocker**.
@@ -127,6 +132,7 @@ FocusGuard requires two Android system permissions shown at the top of the home 
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome! Some ideas for future enhancements:
+
 - Additional guarded apps (e.g., YouTube Shorts, Reddit)
 - Daily & weekly block/unlock statistics
 - Optional strict-mode cooldown before disabling the Master Blocker
