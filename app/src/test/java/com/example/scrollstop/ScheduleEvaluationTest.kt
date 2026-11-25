@@ -379,6 +379,68 @@ class ScheduleEvaluationTest {
 
     // endregion
 
+    // region 10. Invalid & malformed intervals loaded from storage
+
+    @Test
+    fun filtersOutSameTimeIntervalAndKeepsValidOnes_whenLoadedFromRawStorage() {
+        val prefs = MapSharedPreferences()
+        prefs.edit()
+            .putString(
+                "intervals",
+                """[
+                    {"id":"bad","startMinute":300,"endMinute":300},
+                    {"id":"good1","startMinute":600,"endMinute":720},
+                    {"id":"good2","startMinute":1380,"endMinute":60}
+                ]""",
+            )
+            .apply()
+        val manager = createSettingsManager(prefs)
+
+        val intervals = manager.getIntervals()
+
+        assertEquals(2, intervals.size)
+        assertEquals(listOf("good1", "good2"), intervals.map { it.id })
+        assertEquals(600, intervals[0].startMinute)
+        assertEquals(720, intervals[0].endMinute)
+        assertEquals(1380, intervals[1].startMinute)
+        assertEquals(60, intervals[1].endMinute)
+    }
+
+    @Test
+    fun ignoresLoneSameTimeInterval_whenEvaluatingFromRawStorage() {
+        val prefs = MapSharedPreferences()
+        prefs.edit()
+            .putString("intervals", """[{"id":"bad","startMinute":300,"endMinute":300}]""")
+            .apply()
+        val manager = createSettingsManager(prefs)
+        manager.isEnabled = true
+        manager.isHardBlock = false
+        manager.scheduleMode = ScheduleMode.CUSTOM
+
+        assertTrue(manager.getIntervals().isEmpty())
+        val stateAtSameMinute = manager.evaluate(fixedDateTime(hour = 5, minute = 0))
+        val stateAtOtherMinute = manager.evaluate(fixedDateTime(hour = 14, minute = 0))
+        assertEquals(BlockState.NOT_BLOCKING, stateAtSameMinute)
+        assertEquals(BlockState.NOT_BLOCKING, stateAtOtherMinute)
+    }
+
+    @Test
+    fun fallsBackSafelyToEmptyAndNotBlocking_whenIntervalsJsonIsMalformed() {
+        val prefs = MapSharedPreferences()
+        prefs.edit()
+            .putString("intervals", "{not valid json [")
+            .apply()
+        val manager = createSettingsManager(prefs)
+        manager.isEnabled = true
+        manager.isHardBlock = false
+        manager.scheduleMode = ScheduleMode.CUSTOM
+
+        assertTrue(manager.getIntervals().isEmpty())
+        assertEquals(BlockState.NOT_BLOCKING, manager.evaluate(fixedDateTime(hour = 12, minute = 0)))
+    }
+
+    // endregion
+
     // region Characterization tests
     // Documents current behavior. Not a guaranteed spec; changing it requires approval.
 
