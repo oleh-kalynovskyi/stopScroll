@@ -63,14 +63,14 @@ val PolishStrings =
             "Przedziały dłuższe niż 2 godziny (> 120 min) pozwalają na odblokowanie do $quotaMin min/godz. " +
                 "Przedziały trwające 2 godziny lub krócej (<= 120 min) działają automatycznie jako Ścisła blokada."
         },
-        ruleSessionLimit = { limitMin, cooldownDuration ->
-            "Korzystaj swobodnie z wybranych aplikacji do $limitMin min bez szarego ekranu, po czym zostaną ściśle zablokowane na $cooldownDuration. " +
-                "Przerwa trwająca $cooldownDuration resetuje licznik."
+        ruleSessionLimit = { limitMin, _ ->
+            "Korzystaj swobodnie z wybranych aplikacji do $limitMin min na godzinę bez szarego ekranu. " +
+                "Po wyczerpaniu włącza się ścisła blokada do początku następnej godziny."
         },
         hardBlockCheckboxTitle = "Ścisła blokada (wyłącz wszystkie tymczasowe odblokowania)",
         hardBlockCheckboxSubtitle =
             "Dotyczy zarówno trybu Cały dzień, jak i Własnych przedziałów.",
-        sessionLimitCardTitle = "Dozwolony czas sesji",
+        sessionLimitCardTitle = "Dozwolony czas na godzinę",
         sessionStatusRemaining = { mm, ss, limitMin ->
             "Pozostało %d:%02d z %d min · bez szarego ekranu".format(mm, ss, limitMin)
         },
@@ -78,14 +78,13 @@ val PolishStrings =
             "Zablokowano do $untilTime (pozostało $remainingMin min)"
         },
         sessionResetsAtHint = { limitMin, resetTime ->
-            "Zresetuje się do $limitMin min o $resetTime bez użycia."
+            "Zresetuje się do $limitMin min o $resetTime."
         },
-        sessionCooldownHint = { cooldownDuration ->
-            "Wspólny limit dla wszystkich wybranych aplikacji. Po jego wyczerpaniu włącza się ścisła blokada na $cooldownDuration; " +
-                "brak aktywności przez $cooldownDuration resetuje sesję."
+        sessionCooldownHint = { _ ->
+            "Wspólny limit dla wszystkich wybranych aplikacji. Resetuje się automatycznie na początku każdej godziny."
         },
         sessionWarningBanner = { minutesLeft ->
-            "FocusGuard · pozostały $minutesLeft min do blokady na 1 godz."
+            "FocusGuard · pozostały $minutesLeft min w tej godzinie"
         },
         customPeriodsHeader = { count -> "Własne przedziały czasowe ($count)" },
         overnightSupportedSubtitle = "Przedziały nocne (np. 22:00 – 02:00) są obsługiwane",
@@ -126,8 +125,8 @@ val PolishStrings =
         lockShortPeriodReason = { duration ->
             "Ten okres skupienia trwa $duration. Przedziałów trwających 2 godziny lub krócej nie można odblokować."
         },
-        lockSessionCooldownReason = { limitMin, cooldownDuration ->
-            "Limit sesji ($limitMin min) został wyczerpany. Chronione aplikacje są wstrzymane na $cooldownDuration."
+        lockSessionCooldownReason = { limitMin, _ ->
+            "Twój limit ($limitMin min) na tę godzinę został wyczerpany."
         },
         lockLiftsAt = { time -> "Blokada kończy się o $time." },
         lockRunsAllDay = "Ta blokada działa przez cały dzień.",

@@ -12,14 +12,13 @@
 - **Three Flexible Modes**
   - **All Day (24/7):** Block selected apps around the clock.
   - **Custom Time Periods:** Add any number of custom focus intervals (including overnight ranges that cross midnight, such as `22:00 – 02:00`). Adjacent or overlapping intervals are automatically merged when evaluating active focus windows.
-  - **Session Limit Mode (Allowance + 1-Hour Cooldown):** A "use first, cool down after" approach for intentional short visits:
+  - **Session Limit Mode (Hourly Allowance):** A "use first, block after" approach for intentional short visits:
     - **Full-Color Free Access:** Open guarded apps immediately with **no upfront lock screen** and **no gray screen overlay**.
-    - **Configurable Session Presets:** Choose **5, 10, or 15 minutes** of shared active usage via quick preset chips.
+    - **Configurable Session Presets:** Choose **5, 10, or 15 minutes** of shared active usage per clock hour via quick preset chips.
     - **Active Screen-On Tracking:** Time only ticks while a guarded app is in the foreground and the screen is on — leaving the app or locking your phone pauses the timer automatically.
-    - **2-Minute Warning Banner:** When 2 minutes remain in your session, a non-intrusive, touch-pass-through pill banner appears at the top of the screen for ~5 seconds (no notification permission required).
-    - **1-Hour Hard Cooldown:** Once the limit is reached, selected apps are hard-blocked for **1 hour** with a lock screen showing the exact time access returns.
-    - **Hybrid Inactivity Auto-Reset:** Stepping away from all guarded apps for 1 hour automatically resets any partial session usage back to the full allowance.
-    - **Live Status & Progress:** The home screen displays a real-time countdown and progress bar for your remaining session time or active cooldown.
+    - **2-Minute Warning Banner:** When 2 minutes remain in the current hour, a non-intrusive, touch-pass-through pill banner appears at the top of the screen for ~5 seconds (no notification permission required).
+    - **Clock-Hour Reset & Hard Block:** Once the limit is reached, selected apps are hard-blocked until the start of the next clock hour (`:00`), when both usage and blocks reset automatically.
+    - **Live Status & Progress:** The home screen displays a real-time countdown, progress bar, and the exact time your allowance resets.
 - **Automatic 2-Hour Rule & Hourly Quota** _(All Day & Custom Modes)_
   - **Short Focus Periods (`<= 2 hours`):** Automatically enforced as a **Hard Block** — no temporary unlock button is shown on the lock screen.
   - **Long Focus Periods (`> 2 hours`) or All Day Mode:** Allows up to **15 minutes of temporary unlock per clock hour** (when Hard Block is unchecked).

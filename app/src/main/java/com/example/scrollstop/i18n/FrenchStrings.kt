@@ -67,15 +67,15 @@ val FrenchStrings =
                     "Les plages de plus de 2 heures (> 120 min) permettent jusqu'à $quotaMin min/h de déverrouillage temporaire. " +
                             "Les plages de 2 heures ou moins (<= 120 min) agissent automatiquement comme un Blocage strict."
                 },
-                ruleSessionLimit = { limitMin, cooldownDuration ->
-                    "Utilisez les apps sélectionnées librement jusqu'à $limitMin min sans écran gris, puis elles sont bloquées strictement pendant $cooldownDuration. " +
-                            "Une pause de $cooldownDuration réinitialise le minuteur."
+                ruleSessionLimit = { limitMin, _ ->
+                    "Utilisez les apps sélectionnées librement jusqu'à $limitMin min par heure sans écran gris. " +
+                            "Une fois la limite atteinte, elles sont bloquées strictement jusqu'à l'heure suivante."
                 },
                 hardBlockCheckboxTitle =
                         "Blocage strict (désactiver tous les déverrouillages temporaires)",
                 hardBlockCheckboxSubtitle =
                         "S'applique aux modes Toute la journée et Plages personnalisées.",
-                sessionLimitCardTitle = "Durée de session autorisée",
+                sessionLimitCardTitle = "Temps autorisé par heure",
                 sessionStatusRemaining = { mm, ss, limitMin ->
                     "%d:%02d restantes sur %d min · sans écran gris".format(mm, ss, limitMin)
                 },
@@ -83,14 +83,13 @@ val FrenchStrings =
                     "Bloqué jusqu'à $untilTime ($remainingMin min restantes)"
                 },
                 sessionResetsAtHint = { limitMin, resetTime ->
-                    "Réinitialisation à $limitMin min à $resetTime sans utilisation."
+                    "Réinitialisation à $limitMin min à $resetTime."
                 },
-                sessionCooldownHint = { cooldownDuration ->
-                    "Partagé entre toutes les apps sélectionnées. Une fois la limite atteinte, un blocage strict de $cooldownDuration démarre ; " +
-                            "sans ouverture pendant $cooldownDuration, le minuteur se réinitialise."
+                sessionCooldownHint = { _ ->
+                    "Partagé entre toutes les apps sélectionnées. Réinitialisé automatiquement au début de chaque heure."
                 },
                 sessionWarningBanner = { minutesLeft ->
-                    "FocusGuard · $minutesLeft min restantes avant blocage d'1 h"
+                    "FocusGuard · $minutesLeft min restantes cette heure"
                 },
                 customPeriodsHeader = { count -> "Plages horaires personnalisées ($count)" },
                 overnightSupportedSubtitle =
@@ -132,8 +131,8 @@ val FrenchStrings =
                 lockShortPeriodReason = { duration ->
                     "Cette période de concentration dure $duration. Les périodes de 2 heures ou moins ne peuvent pas être déverrouillées."
                 },
-                lockSessionCooldownReason = { limitMin, cooldownDuration ->
-                    "Votre session de $limitMin min est terminée. Les apps surveillées sont en pause pendant $cooldownDuration."
+                lockSessionCooldownReason = { limitMin, _ ->
+                    "Votre limite de $limitMin min pour cette heure est atteinte."
                 },
                 lockLiftsAt = { time -> "Le blocage prend fin à $time." },
                 lockRunsAllDay = "Ce blocage est actif toute la journée.",

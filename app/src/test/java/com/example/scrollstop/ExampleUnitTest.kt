@@ -91,18 +91,20 @@ class ExampleUnitTest {
     }
 
     @Test
-    fun sessionLimit_warnsOnceAtTwoMinutesAndStartsOneHourCooldown() {
+    fun sessionLimit_warnsOnceAtTwoMinutesAndBlocksUntilNextClockHour() {
         val settings = newSettings()
         settings.isEnabled = true
         settings.scheduleMode = ScheduleMode.SESSION_LIMIT
         settings.sessionLimitMinutes = 5 // 300_000 ms
 
-        val base = 1_700_000_000_000L
+        // 2026-01-01T12:40:00Z -> next clock hour is 13:00:00Z
+        val base = LocalDateTime.of(2026, 1, 1, 12, 40, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
+        val nextHour = LocalDateTime.of(2026, 1, 1, 13, 0, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
 
         // Before reaching 2 minutes left (use 2m 55s = 175_000 ms -> 2m 05s left)
         val beforeWarning = advanceUsage(settings, 175_000L, base)
         assertTrue(beforeWarning.all { it == SessionTickResult.ACTIVE })
-        assertFalse(settings.evaluate(LocalDateTime.of(2026, 1, 1, 12, 0), base + 175_000L).isBlocking)
+        assertFalse(settings.evaluate(LocalDateTime.of(2026, 1, 1, 12, 42), base + 175_000L).isBlocking)
 
         // Crossing 2-minute threshold (use 5_000 ms -> 180_000 ms used, 120_000 ms = 2m left)
         val atWarning = settings.recordSessionUsage(5_000L, base + 180_000L)
@@ -112,67 +114,68 @@ class ExampleUnitTest {
         val afterWarning = advanceUsage(settings, 115_000L, base + 180_000L)
         assertTrue(afterWarning.all { it == SessionTickResult.ACTIVE })
 
-        // Final 5_000 ms exhausts the 5-min allowance -> 1-hour hard cooldown starts
+        // Final 5_000 ms exhausts the 5-min allowance -> hard block until 13:00:00Z
         val cooldownStart = base + 300_000L
         assertEquals(
             SessionTickResult.COOLDOWN_STARTED,
             settings.recordSessionUsage(5_000L, cooldownStart),
         )
 
-        val blockState = settings.evaluate(LocalDateTime.of(2026, 1, 1, 12, 5), cooldownStart + 1_000L)
+        val blockState = settings.evaluate(LocalDateTime.of(2026, 1, 1, 12, 45), cooldownStart + 1_000L)
         assertTrue(blockState.isBlocking)
         assertFalse(blockState.unlockEligible)
         assertTrue(blockState.hardBlockEnabled)
         assertTrue(blockState.isSessionCooldown)
-        assertEquals(cooldownStart + 60 * 60_000L, blockState.cooldownUntilMillis)
+        assertEquals(nextHour, blockState.cooldownUntilMillis)
 
-        // While cooldown is active, ticks report COOLDOWN_ACTIVE
+        // While still in the 12:00 hour, ticks report COOLDOWN_ACTIVE
         assertEquals(
             SessionTickResult.COOLDOWN_ACTIVE,
             settings.recordSessionUsage(5_000L, cooldownStart + 10 * 60_000L),
         )
 
-        // Once 1 hour elapses, block lifts and full 5-min allowance is restored
-        val afterCooldown = cooldownStart + 60 * 60_000L
-        assertFalse(settings.evaluate(LocalDateTime.of(2026, 1, 1, 13, 5), afterCooldown).isBlocking)
-        val freshStatus = settings.getSessionStatus(afterCooldown)
+        // At 13:00:00Z (start of next clock hour), block lifts and full 5-min allowance is restored
+        assertFalse(settings.evaluate(LocalDateTime.of(2026, 1, 1, 13, 0), nextHour).isBlocking)
+        val freshStatus = settings.getSessionStatus(nextHour)
         assertFalse(freshStatus.isCooldownActive)
         assertEquals(0L, freshStatus.usedMillis)
         assertEquals(5 * 60_000L, freshStatus.remainingMillis)
+        assertNull(freshStatus.resetsAtMillis)
     }
 
     @Test
-    fun sessionLimit_hybridInactivityResetsAfterOneHour() {
+    fun sessionLimit_partialUsageResetsAtNextClockHour() {
         val settings = newSettings()
         settings.isEnabled = true
         settings.scheduleMode = ScheduleMode.SESSION_LIMIT
         settings.sessionLimitMinutes = 15
 
-        val base = 1_700_000_000_000L
-        // Use 6 minutes
+        // 2026-01-01T20:40:00Z -> use 6 min (until 20:46:00Z), resets at 21:00:00Z
+        val base = LocalDateTime.of(2026, 1, 1, 20, 40, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
+        val nextHour = LocalDateTime.of(2026, 1, 1, 21, 0, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
         advanceUsage(settings, 6 * 60_000L, base)
-        val lastActive = base + 6 * 60_000L
 
-        // After 59 minutes of inactivity, usage is still preserved and reset time is reported
-        val statusAt59Min = settings.getSessionStatus(lastActive + 59 * 60_000L)
-        assertEquals(6 * 60_000L, statusAt59Min.usedMillis)
-        assertEquals(9 * 60_000L, statusAt59Min.remainingMillis)
-        assertEquals(lastActive + 60 * 60_000L, statusAt59Min.resetsAtMillis)
+        // At 20:59:00Z (still in 20:00 hour), usage is preserved and resetsAtMillis == 21:00:00Z
+        val at2059 = nextHour - 60_000L
+        val statusBeforeHour = settings.getSessionStatus(at2059)
+        assertEquals(6 * 60_000L, statusBeforeHour.usedMillis)
+        assertEquals(9 * 60_000L, statusBeforeHour.remainingMillis)
+        assertEquals(nextHour, statusBeforeHour.resetsAtMillis)
 
-        // After 60 minutes of inactivity, partial usage resets to 0 and reset time is cleared
-        val statusAt60Min = settings.getSessionStatus(lastActive + 60 * 60_000L)
-        assertEquals(0L, statusAt60Min.usedMillis)
-        assertEquals(15 * 60_000L, statusAt60Min.remainingMillis)
-        assertNull(statusAt60Min.resetsAtMillis)
+        // At 21:00:00Z, partial usage resets to 0 and full 15 min is available
+        val statusAtNextHour = settings.getSessionStatus(nextHour)
+        assertEquals(0L, statusAtNextHour.usedMillis)
+        assertEquals(15 * 60_000L, statusAtNextHour.remainingMillis)
+        assertNull(statusAtNextHour.resetsAtMillis)
 
-        // Recording a new 5s tick after 60 min inactivity starts fresh from 0
+        // Recording a new 5s tick at 21:00:05Z starts fresh from 0
         assertEquals(
             SessionTickResult.ACTIVE,
-            settings.recordSessionUsage(5_000L, lastActive + 60 * 60_000L + 5_000L),
+            settings.recordSessionUsage(5_000L, nextHour + 5_000L),
         )
         assertEquals(
             5_000L,
-            settings.getSessionStatus(lastActive + 60 * 60_000L + 5_000L).usedMillis,
+            settings.getSessionStatus(nextHour + 5_000L).usedMillis,
         )
     }
 
@@ -189,7 +192,7 @@ class ExampleUnitTest {
         settings.isEnabled = true
         settings.scheduleMode = ScheduleMode.SESSION_LIMIT
         settings.sessionLimitMinutes = 5
-        val base = 1_700_000_000_000L
+        val base = LocalDateTime.of(2026, 1, 1, 14, 10, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
         advanceUsage(settings, 5 * 60_000L, base)
         assertTrue(settings.isSessionCooldownActive(base + 5 * 60_000L + 1_000L))
 

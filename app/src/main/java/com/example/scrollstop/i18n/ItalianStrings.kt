@@ -63,14 +63,14 @@ val ItalianStrings =
             "Le fasce superiori a 2 ore (> 120 min) consentono fino a $quotaMin min/h di sblocco temporaneo. " +
                 "Le fasce di 2 ore o meno (<= 120 min) attivano automaticamente il Blocco rigoroso."
         },
-        ruleSessionLimit = { limitMin, cooldownDuration ->
-            "Usa le app selezionate liberamente fino a $limitMin min senza schermo grigio, poi scatta un blocco rigoroso di $cooldownDuration. " +
-                "Una pausa di $cooldownDuration azzera il timer."
+        ruleSessionLimit = { limitMin, _ ->
+            "Usa le app selezionate liberamente fino a $limitMin min all'ora senza schermo grigio. " +
+                "Al raggiungimento del limite scatta il blocco rigoroso fino all'ora successiva."
         },
         hardBlockCheckboxTitle = "Blocco rigoroso (disattiva tutti gli sblocchi temporanei)",
         hardBlockCheckboxSubtitle =
             "Si applica sia a Tutto il giorno sia alle Fasce personalizzate.",
-        sessionLimitCardTitle = "Durata sessione consentita",
+        sessionLimitCardTitle = "Tempo consentito all'ora",
         sessionStatusRemaining = { mm, ss, limitMin ->
             "%d:%02d rimasti su %d min · senza schermo grigio".format(mm, ss, limitMin)
         },
@@ -78,14 +78,13 @@ val ItalianStrings =
             "Bloccato fino alle $untilTime ($remainingMin min rimasti)"
         },
         sessionResetsAtHint = { limitMin, resetTime ->
-            "Si azzera a $limitMin min alle $resetTime senza utilizzo."
+            "Si azzera a $limitMin min alle $resetTime."
         },
-        sessionCooldownHint = { cooldownDuration ->
-            "Condiviso tra tutte le app selezionate. Al termine inizia un blocco rigoroso di $cooldownDuration; " +
-                "non aprire le app per $cooldownDuration azzera il timer."
+        sessionCooldownHint = { _ ->
+            "Condiviso tra tutte le app selezionate. Si azzera automaticamente all'inizio di ogni ora."
         },
         sessionWarningBanner = { minutesLeft ->
-            "FocusGuard · mancano $minutesLeft min al blocco di 1 ora"
+            "FocusGuard · mancano $minutesLeft min in quest'ora"
         },
         customPeriodsHeader = { count -> "Fasce orarie personalizzate ($count)" },
         overnightSupportedSubtitle = "Gli intervalli notturni (es. 22:00 – 02:00) sono supportati",
@@ -126,8 +125,8 @@ val ItalianStrings =
         lockShortPeriodReason = { duration ->
             "Questa fascia di concentrazione dura $duration. Le fasce di 2 ore o meno non possono essere sbloccate."
         },
-        lockSessionCooldownReason = { limitMin, cooldownDuration ->
-            "La tua sessione di $limitMin min è terminata. Le app protette sono in pausa per $cooldownDuration."
+        lockSessionCooldownReason = { limitMin, _ ->
+            "Il tuo limite di $limitMin min per quest'ora è terminato."
         },
         lockLiftsAt = { time -> "Il blocco termina alle $time." },
         lockRunsAllDay = "Questo blocco è attivo tutto il giorno.",

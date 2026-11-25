@@ -63,9 +63,9 @@ val GermanStrings =
             "Zeiträume über 2 Stunden (> 120 Min.) erlauben bis zu $quotaMin Min./Std. temporäre Entsperrung. " +
                 "Zeiträume von 2 Stunden oder weniger (<= 120 Min.) wirken automatisch als strikte Sperre."
         },
-        ruleSessionLimit = { limitMin, cooldownDuration ->
-            "Nutze ausgewählte Apps bis zu $limitMin Min. frei ohne Graufilter, danach werden sie für $cooldownDuration strikt gesperrt. " +
-                "Eine Pause von $cooldownDuration setzt den Timer zurück."
+        ruleSessionLimit = { limitMin, _ ->
+            "Nutze ausgewählte Apps bis zu $limitMin Min. pro voller Stunde frei ohne Graufilter. " +
+                "Danach werden sie bis zur nächsten Stunde strikt gesperrt."
         },
         hardBlockCheckboxTitle = "Strikte Sperre (alle temporären Entsperrungen deaktivieren)",
         hardBlockCheckboxSubtitle = "Gilt sowohl für Ganztägig als auch für eigene Zeiträume.",
@@ -77,14 +77,13 @@ val GermanStrings =
             "Gesperrt bis $untilTime ($remainingMin Min. übrig)"
         },
         sessionResetsAtHint = { limitMin, resetTime ->
-            "Wird um $resetTime ohne Nutzung auf $limitMin Min. zurückgesetzt."
+            "Wird um $resetTime auf $limitMin Min. zurückgesetzt."
         },
-        sessionCooldownHint = { cooldownDuration ->
-            "Gemeinsames Limit für alle ausgewählten Apps. Nach Ablauf startet eine strikte Sperre für $cooldownDuration; " +
-                "ohne Nutzung für $cooldownDuration wird der Timer zurückgesetzt."
+        sessionCooldownHint = { _ ->
+            "Gemeinsames Limit für alle ausgewählten Apps. Wird zu Beginn jeder vollen Stunde automatisch zurückgesetzt."
         },
         sessionWarningBanner = { minutesLeft ->
-            "FocusGuard · noch $minutesLeft Min. bis zur 1-Std.-Sperre"
+            "FocusGuard · noch $minutesLeft Min. in dieser Stunde"
         },
         customPeriodsHeader = { count -> "Eigene Zeiträume ($count)" },
         overnightSupportedSubtitle = "Zeiträume über Mitternacht (z. B. 22:00 – 02:00) werden unterstützt",
@@ -125,8 +124,8 @@ val GermanStrings =
         lockShortPeriodReason = { duration ->
             "Dieser Fokuszeitraum dauert $duration. Zeiträume von 2 Stunden oder weniger können nicht entsperrt werden."
         },
-        lockSessionCooldownReason = { limitMin, cooldownDuration ->
-            "Dein Sitzungslimit von $limitMin Min. ist erreicht. Geschützte Apps pausieren für $cooldownDuration."
+        lockSessionCooldownReason = { limitMin, _ ->
+            "Dein Limit von $limitMin Min. für diese Stunde ist erreicht."
         },
         lockLiftsAt = { time -> "Die Sperre endet um $time." },
         lockRunsAllDay = "Diese Sperre gilt den ganzen Tag.",

@@ -66,15 +66,15 @@ val PortugueseStrings =
                     "Períodos maiores que 2 horas (> 120 min) permitem até $quotaMin min/h de desbloqueio temporário. " +
                             "Períodos de 2 horas ou menos (<= 120 min) funcionam como Bloqueio rígido automaticamente."
                 },
-                ruleSessionLimit = { limitMin, cooldownDuration ->
-                    "Use os apps selecionados livremente por até $limitMin min sem tela cinza; depois eles ficam bloqueados rigidamente por $cooldownDuration. " +
-                            "Uma pausa de $cooldownDuration reinicia o cronômetro."
+                ruleSessionLimit = { limitMin, _ ->
+                    "Use os apps selecionados livremente por até $limitMin min por hora sem tela cinza. " +
+                            "Ao atingir o limite, eles ficam bloqueados rigidamente até a próxima hora."
                 },
                 hardBlockCheckboxTitle =
                         "Bloqueio rígido (desativar todos os desbloqueios temporários)",
                 hardBlockCheckboxSubtitle =
                         "Aplica-se tanto ao modo O dia todo quanto aos Períodos personalizados.",
-                sessionLimitCardTitle = "Tempo de sessão permitido",
+                sessionLimitCardTitle = "Tempo permitido por hora",
                 sessionStatusRemaining = { mm, ss, limitMin ->
                     "%d:%02d restantes de %d min · sem tela cinza".format(mm, ss, limitMin)
                 },
@@ -82,14 +82,13 @@ val PortugueseStrings =
                     "Bloqueado até $untilTime ($remainingMin min restantes)"
                 },
                 sessionResetsAtHint = { limitMin, resetTime ->
-                    "Reinicia para $limitMin min às $resetTime sem uso."
+                    "Reinicia para $limitMin min às $resetTime."
                 },
-                sessionCooldownHint = { cooldownDuration ->
-                    "Compartilhado entre todos os apps selecionados. Ao atingir o limite, um bloqueio rígido de $cooldownDuration começa; " +
-                            "ficar $cooldownDuration sem abrir os apps reinicia o cronômetro."
+                sessionCooldownHint = { _ ->
+                    "Compartilhado entre todos os apps selecionados. Reinicia automaticamente no início de cada hora."
                 },
                 sessionWarningBanner = { minutesLeft ->
-                    "FocusGuard · restam $minutesLeft min antes do bloqueio de 1 h"
+                    "FocusGuard · restam $minutesLeft min nesta hora"
                 },
                 customPeriodsHeader = { count -> "Períodos personalizados ($count)" },
                 overnightSupportedSubtitle =
@@ -131,8 +130,8 @@ val PortugueseStrings =
                 lockShortPeriodReason = { duration ->
                     "Este período de foco dura $duration. Períodos de 2 horas ou menos não podem ser desbloqueados."
                 },
-                lockSessionCooldownReason = { limitMin, cooldownDuration ->
-                    "Sua sessão de $limitMin min terminou. Os apps monitorados ficam pausados por $cooldownDuration."
+                lockSessionCooldownReason = { limitMin, _ ->
+                    "Seu limite de $limitMin min para esta hora terminou."
                 },
                 lockLiftsAt = { time -> "O bloqueio termina às $time." },
                 lockRunsAllDay = "Este bloqueio dura o dia todo.",

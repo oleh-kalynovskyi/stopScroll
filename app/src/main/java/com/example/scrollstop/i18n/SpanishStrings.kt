@@ -66,15 +66,15 @@ val SpanishStrings =
                     "Los periodos de más de 2 horas (> 120 min) permiten hasta $quotaMin min/h de desbloqueo temporal. " +
                             "Los periodos de 2 horas o menos (<= 120 min) actúan como Bloqueo estricto automáticamente."
                 },
-                ruleSessionLimit = { limitMin, cooldownDuration ->
-                    "Usa las apps seleccionadas libremente hasta $limitMin min sin pantalla gris; después se bloquean estrictamente durante $cooldownDuration. " +
-                            "Una pausa de $cooldownDuration reinicia el temporizador."
+                ruleSessionLimit = { limitMin, _ ->
+                    "Usa las apps seleccionadas libremente hasta $limitMin min por hora sin pantalla gris. " +
+                            "Al agotarlos, se bloquean estrictamente hasta la siguiente hora."
                 },
                 hardBlockCheckboxTitle =
                         "Bloqueo estricto (desactivar todos los desbloqueos temporales)",
                 hardBlockCheckboxSubtitle =
                         "Se aplica tanto a Todo el día como a los Periodos personalizados.",
-                sessionLimitCardTitle = "Tiempo de sesión permitido",
+                sessionLimitCardTitle = "Tiempo permitido por hora",
                 sessionStatusRemaining = { mm, ss, limitMin ->
                     "Quedan %d:%02d de %d min · sin pantalla gris".format(mm, ss, limitMin)
                 },
@@ -82,14 +82,13 @@ val SpanishStrings =
                     "Bloqueado hasta las $untilTime (quedan $remainingMin min)"
                 },
                 sessionResetsAtHint = { limitMin, resetTime ->
-                    "Se reinicia a $limitMin min a las $resetTime si no se usan."
+                    "Se reinicia a $limitMin min a las $resetTime."
                 },
-                sessionCooldownHint = { cooldownDuration ->
-                    "Compartido entre todas las apps seleccionadas. Al terminar, comienza un bloqueo estricto de $cooldownDuration; " +
-                            "sin usar las apps durante $cooldownDuration el temporizador se reinicia."
+                sessionCooldownHint = { _ ->
+                    "Compartido entre todas las apps seleccionadas. Se reinicia automáticamente al inicio de cada hora."
                 },
                 sessionWarningBanner = { minutesLeft ->
-                    "FocusGuard · quedan $minutesLeft min antes del bloqueo de 1 h"
+                    "FocusGuard · quedan $minutesLeft min en esta hora"
                 },
                 customPeriodsHeader = { count -> "Periodos personalizados ($count)" },
                 overnightSupportedSubtitle = "Se admiten horarios nocturnos (p. ej. 22:00 – 02:00)",
@@ -130,8 +129,8 @@ val SpanishStrings =
                 lockShortPeriodReason = { duration ->
                     "Este periodo de concentración dura $duration. Los periodos de 2 horas o menos no se pueden desbloquear."
                 },
-                lockSessionCooldownReason = { limitMin, cooldownDuration ->
-                    "Tu sesión de $limitMin min ha terminado. Las apps protegidas quedan bloqueadas durante $cooldownDuration."
+                lockSessionCooldownReason = { limitMin, _ ->
+                    "Tu límite de $limitMin min para esta hora ha terminado."
                 },
                 lockLiftsAt = { time -> "El bloqueo termina a las $time." },
                 lockRunsAllDay = "Este bloqueo dura todo el día.",

@@ -62,9 +62,9 @@ val EnglishStrings =
             "Periods longer than 2 hours (> 120 min) allow up to ${quotaMin}m/h temporary unlock. " +
                 "Periods of 2 hours or less (<= 120 min) act as a Hard Block automatically."
         },
-        ruleSessionLimit = { limitMin, cooldownDuration ->
-            "Use selected apps freely for up to $limitMin min with no gray screen, then they are hard-blocked for $cooldownDuration. " +
-                "Staying away for $cooldownDuration resets your timer."
+        ruleSessionLimit = { limitMin, _ ->
+            "Use selected apps freely for up to $limitMin min per clock hour with no gray screen. " +
+                "Once used up, they are hard-blocked until the next hour."
         },
         hardBlockCheckboxTitle = "Hard Block (disable all temporary unlocks)",
         hardBlockCheckboxSubtitle = "Applies to both All Day and Custom Time Periods.",
@@ -76,14 +76,13 @@ val EnglishStrings =
             "Blocked until $untilTime ($remainingMin min left)"
         },
         sessionResetsAtHint = { limitMin, resetTime ->
-            "Resets to $limitMin min at $resetTime if unused."
+            "Resets to $limitMin min at $resetTime."
         },
-        sessionCooldownHint = { cooldownDuration ->
-            "Shared across all selected apps. After the limit, a $cooldownDuration hard block starts; " +
-                "staying out of guarded apps for $cooldownDuration resets the session."
+        sessionCooldownHint = { _ ->
+            "Shared across all selected apps. Resets automatically at the start of every hour."
         },
         sessionWarningBanner = { minutesLeft ->
-            "FocusGuard · $minutesLeft min left before 1h block"
+            "FocusGuard · $minutesLeft min left this hour"
         },
         customPeriodsHeader = { count -> "Custom Time Periods ($count)" },
         overnightSupportedSubtitle = "Overnight ranges (e.g. 22:00 – 02:00) are supported",
@@ -124,8 +123,8 @@ val EnglishStrings =
         lockShortPeriodReason = { duration ->
             "This focus period is $duration long. Periods of 2 hours or less can't be unlocked."
         },
-        lockSessionCooldownReason = { limitMin, cooldownDuration ->
-            "Your $limitMin min session is up. Guarded apps are paused for $cooldownDuration."
+        lockSessionCooldownReason = { limitMin, _ ->
+            "Your $limitMin min limit for this hour is up."
         },
         lockLiftsAt = { time -> "The block lifts at $time." },
         lockRunsAllDay = "This block runs all day.",

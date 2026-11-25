@@ -286,8 +286,8 @@ class SettingsManager internal constructor(
         val hardBlock = isHardBlock
 
         if (scheduleMode == ScheduleMode.SESSION_LIMIT) {
-            val cooldownUntil = sessionCooldownUntilMillis
-            if (cooldownUntil > nowMillis) {
+            val cooldownUntil = activeSessionCooldownUntil(nowMillis)
+            if (cooldownUntil != null) {
                 val endLocal = cooldownUntil.toLocalDateTime(zoneProvider())
                 return BlockState(
                     isBlocking = true,
@@ -431,40 +431,41 @@ class SettingsManager internal constructor(
 
     // endregion
 
-    // region Session limit + cooldown
+    // region Session limit + hourly reset
 
     val sessionCooldownUntilMillis: Long
         get() = prefs.getLong(KEY_SESSION_COOLDOWN_UNTIL, 0L)
 
+    private fun activeSessionCooldownUntil(nowMillis: Long): Long? {
+        val cooldownUntil = sessionCooldownUntilMillis
+        if (cooldownUntil <= nowMillis) return null
+        val lastActivity = prefs.getLong(KEY_SESSION_LAST_ACTIVITY_MS, 0L)
+        val currentHourStart = hourStartMillis(nowMillis)
+        if (lastActivity < currentHourStart) return null
+        return minOf(cooldownUntil, nextHourStartMillis(nowMillis))
+    }
+
     fun isSessionCooldownActive(nowMillis: Long = System.currentTimeMillis()): Boolean =
-        sessionCooldownUntilMillis > nowMillis
+        activeSessionCooldownUntil(nowMillis) != null
 
     fun getSessionStatus(nowMillis: Long = System.currentTimeMillis()): SessionStatus {
         val limitMin = sessionLimitMinutes
         val limitMs = limitMin * MILLIS_PER_MINUTE
-        val cooldownUntil = sessionCooldownUntilMillis
+        val activeCooldownUntil = activeSessionCooldownUntil(nowMillis)
 
-        if (cooldownUntil > nowMillis) {
+        if (activeCooldownUntil != null) {
             return SessionStatus(
                 limitMinutes = limitMin,
                 usedMillis = limitMs,
                 remainingMillis = 0L,
-                cooldownUntilMillis = cooldownUntil,
+                cooldownUntilMillis = activeCooldownUntil,
                 isCooldownActive = true,
             )
         }
-        if (cooldownUntil in 1L..nowMillis) {
-            return SessionStatus(
-                limitMinutes = limitMin,
-                usedMillis = 0L,
-                remainingMillis = limitMs,
-                cooldownUntilMillis = 0L,
-                isCooldownActive = false,
-            )
-        }
 
+        val currentHourStart = hourStartMillis(nowMillis)
         val lastActivity = prefs.getLong(KEY_SESSION_LAST_ACTIVITY_MS, 0L)
-        if (lastActivity > 0L && nowMillis - lastActivity >= SESSION_COOLDOWN_MILLIS) {
+        if (lastActivity < currentHourStart) {
             return SessionStatus(
                 limitMinutes = limitMin,
                 usedMillis = 0L,
@@ -475,11 +476,7 @@ class SettingsManager internal constructor(
         }
 
         val used = prefs.getLong(KEY_SESSION_USED_MS, 0L).coerceIn(0L, limitMs)
-        val resetsAt = if (used > 0L && lastActivity > 0L) {
-            lastActivity + SESSION_COOLDOWN_MILLIS
-        } else {
-            null
-        }
+        val resetsAt = if (used > 0L) nextHourStartMillis(nowMillis) else null
         return SessionStatus(
             limitMinutes = limitMin,
             usedMillis = used,
@@ -492,20 +489,19 @@ class SettingsManager internal constructor(
 
     /**
      * Records active foreground usage [deltaMs] in Session Limit mode.
-     * Resets partial usage automatically after [SESSION_COOLDOWN_MINUTES] of inactivity.
-     * Triggers a 1-hour hard cooldown once the configured session allowance is reached.
+     * Usage and cooldowns reset at the start of every calendar clock hour (:00).
+     * Once the configured allowance is reached, guarded apps are hard-blocked until the next hour.
      */
     fun recordSessionUsage(
         deltaMs: Long,
         nowMillis: Long = System.currentTimeMillis(),
     ): SessionTickResult {
         val limitMs = sessionLimitMinutes * MILLIS_PER_MINUTE
-        val cooldownUntil = sessionCooldownUntilMillis
-        if (cooldownUntil > nowMillis) return SessionTickResult.COOLDOWN_ACTIVE
+        if (isSessionCooldownActive(nowMillis)) return SessionTickResult.COOLDOWN_ACTIVE
 
+        val currentHourStart = hourStartMillis(nowMillis)
         val lastActivity = prefs.getLong(KEY_SESSION_LAST_ACTIVITY_MS, 0L)
-        val shouldReset = cooldownUntil in 1L..nowMillis ||
-            (lastActivity > 0L && nowMillis - lastActivity >= SESSION_COOLDOWN_MILLIS)
+        val shouldReset = lastActivity < currentHourStart
 
         val currentUsed = if (shouldReset) 0L else prefs.getLong(KEY_SESSION_USED_MS, 0L).coerceAtLeast(0L)
         val alreadyWarned = if (shouldReset) false else prefs.getBoolean(KEY_SESSION_WARNED, false)
@@ -517,7 +513,7 @@ class SettingsManager internal constructor(
             prefs.edit {
                 putLong(KEY_SESSION_USED_MS, 0L)
                 putLong(KEY_SESSION_LAST_ACTIVITY_MS, nowMillis)
-                putLong(KEY_SESSION_COOLDOWN_UNTIL, nowMillis + SESSION_COOLDOWN_MILLIS)
+                putLong(KEY_SESSION_COOLDOWN_UNTIL, nextHourStartMillis(nowMillis))
                 putBoolean(KEY_SESSION_WARNED, false)
             }
             return SessionTickResult.COOLDOWN_STARTED
